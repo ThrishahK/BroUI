@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+.glow-purple {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+}
+.glow-green {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+}
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out;
+}
+@keyframes floatUp {
+  from {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.4;
+  }
+  to {
+    transform: translateY(-20vh);
+    opacity: 0;
+  }
+}
+
+.animate-float {
+  animation-name: floatUp;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
