@@ -6,6 +6,10 @@ class SubmissionBase(BaseModel):
     question_id: int
     code_answer: Optional[str] = None
     status: str = "not_attempted"  # not_attempted, saved, flagged, submitted
+    attempts: int = 0
+    is_correct: bool = False
+    is_locked: bool = False
+    last_result: Optional[int] = None
 
 class SubmissionCreate(SubmissionBase):
     pass
@@ -14,11 +18,22 @@ class SubmissionUpdate(BaseModel):
     code_answer: Optional[str] = None
     status: Optional[str] = None
 
+class ExecuteRequest(BaseModel):
+    code_answer: str
+
+class ExecuteResponse(BaseModel):
+    question_id: int
+    result: int  # 1 correct, 0 wrong
+    attempts: int
+    is_correct: bool
+    is_locked: bool
+
 class SubmissionResponse(SubmissionBase):
     id: int
     challenge_session_id: int
     file_path: Optional[str] = None
     submitted_at: datetime
+    last_executed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

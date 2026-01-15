@@ -215,10 +215,60 @@ curl -s "http://localhost:8000/api/questions/public/all" | jq
 - `POST /api/challenge/start`
 - `GET /api/challenge/status`
 - `PUT /api/challenge/submission/{question_id}`
+- `POST /api/challenge/execute/{question_id}`  ✅ (calls Execute API, returns 1/0)
 - `POST /api/challenge/upload/{question_id}`
 - `POST /api/challenge/submit`
 
 ---
+
+## Submitting answers (qnid + answer)
+
+Each question has an **ID** (`question_id`). When the user types an answer in the UI and clicks **Save/Flag**, the frontend sends the answer to the backend using:
+
+- **Endpoint**: `PUT /api/challenge/submission/{question_id}`
+- **Path param**: `question_id` (this is the qnid)
+- **JSON body**:
+  - `code_answer`: string (the answer/code the user typed)
+  - `status`: one of `saved`, `flagged`, `not_attempted`
+
+Example:
+
+```bash
+curl -s -X PUT "http://localhost:8000/api/challenge/submission/12" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"code_answer":"print(\"hello\")","status":"saved"}'
+```
+
+## Execute (sandbox judge) + locking rule
+
+To judge a question, the frontend calls:
+
+- `POST /api/challenge/execute/{question_id}`
+- Body: `{ "code_answer": "..." }`
+
+Response:
+- `result`: `1` (correct) or `0` (wrong)
+- `attempts`: how many executes were done
+- `is_correct`: boolean
+- `is_locked`: boolean (**true after correct**)
+
+Rule implemented:
+- You can execute multiple times **until you get correct**.
+- Once correct, that question becomes **locked** (no more executes).
+
+---
+
+## Leaderboard
+
+- `GET /api/leaderboard/`
+
+Returns a ranked list of teams with:
+- `rank`
+- `team_name`
+- `team_leader_usn`
+- `solved`
+- `score`
 
 ## File Uploads (.homie)
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import enum
@@ -20,6 +20,13 @@ class Submission(Base):
     file_path = Column(String)  # Path to uploaded .homie file
     status = Column(Enum(SubmissionStatus), default=SubmissionStatus.not_attempted)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Execution / judging fields
+    attempts = Column(Integer, default=0, nullable=False)
+    is_correct = Column(Boolean, default=False, nullable=False)
+    is_locked = Column(Boolean, default=False, nullable=False)  # locked after correct
+    last_result = Column(Integer, nullable=True)  # 1 correct, 0 wrong (from Execute API)
+    last_executed_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
     challenge_session = relationship("ChallengeSession")

@@ -22,7 +22,7 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await authAPI.login(cleanedUSN, cleanedPassword);
+      await authAPI.login(cleanedUSN, cleanedPassword);
 
       // Store team info for later use
       localStorage.setItem("team_leader_usn", cleanedUSN);

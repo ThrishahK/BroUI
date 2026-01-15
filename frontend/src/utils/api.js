@@ -94,6 +94,13 @@ export const challengeAPI = {
     });
   },
 
+  executeSubmission: async (questionId, code_answer) => {
+    return await apiCall(`/challenge/execute/${questionId}`, {
+      method: 'POST',
+      body: JSON.stringify({ code_answer }),
+    });
+  },
+
   uploadFile: async (questionId, file) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -131,6 +138,13 @@ export const adminAPI = {
 
   getSessions: async () => {
     return await apiCall('/admin/sessions');
+  },
+};
+
+// Leaderboard API
+export const leaderboardAPI = {
+  getLeaderboard: async () => {
+    return await apiCall('/leaderboard/');
   },
 };
 

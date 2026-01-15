@@ -21,5 +21,10 @@ MAX_QUESTIONS = int(config("MAX_QUESTIONS", default=30))
 UPLOAD_DIR = config("UPLOAD_DIR", default="uploads")
 ALLOWED_EXTENSIONS = set(config("ALLOWED_EXTENSIONS", default=".homie").split(","))
 
+# Execute API (sandbox runner) configuration
+EXECUTE_API_BASE_URL = config("EXECUTE_API_BASE_URL", default="")
+EXECUTE_API_TOKEN = config("EXECUTE_API_TOKEN", default="")
+EXECUTE_API_TIMEOUT_SECONDS = float(config("EXECUTE_API_TIMEOUT_SECONDS", default=15))
+
 # Create upload directory if it doesn't exist
 os.makedirs(UPLOAD_DIR, exist_ok=True)

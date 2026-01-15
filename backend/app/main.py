@@ -18,11 +18,12 @@ app.add_middleware(
 
 # Include routers
 try:
-    from .routers import auth, questions, challenge, admin
+    from .routers import auth, questions, challenge, admin, leaderboard
     app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
     app.include_router(questions.router, prefix="/api/questions", tags=["Questions"])
     app.include_router(challenge.router, prefix="/api/challenge", tags=["Challenge"])
     app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+    app.include_router(leaderboard.router, prefix="/api/leaderboard", tags=["Leaderboard"])
     print("Routers registered successfully")
 except ImportError as e:
     print(f"Warning: Could not import routers: {e}")

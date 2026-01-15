@@ -112,7 +112,7 @@ def main():
         print("\n🎉 Database setup completed successfully!")
         print("\n💡 Next steps:")
         print("   1. Start the backend: python server.py")
-        print("   2. Start the frontend: cd ../frontend && npm run dev")
+        print("   2. Start the frontend: cd ../frontend && bun run dev")
         print("   3. Test login with: USN=TEST123, Password=testpass")
     else:
         print("\n❌ Database setup failed!")

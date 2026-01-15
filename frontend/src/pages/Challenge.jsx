@@ -9,15 +9,76 @@ export default function Challenge() {
   const [current, setCurrent] = useState(1);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [questions, setQuestions] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
-  const [session, setSession] = useState(null);
+  const [_submissions, setSubmissions] = useState([]);
+  const [_session, setSession] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [executeStatus, setExecuteStatus] = useState({}); // { [questionId]: { loading, result, attempts } }
 
   // Initialize challenge on component mount
   useEffect(() => {
+    const initializeChallenge = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        // Start challenge session
+        const sessionData = await challengeAPI.startChallenge();
+        setSession(sessionData.session);
+
+        // Load questions
+        const questionsData = await questionsAPI.getPublicQuestions();
+
+        // Initialize questions with API data
+        const initializedQuestions = questionsData.map((q) => ({
+          id: q.id,
+          title: q.title,
+          description: q.description,
+          sample_input: q.sample_input,
+          sample_output: q.sample_output,
+          difficulty: q.difficulty,
+          points: q.points,
+          status: "not_attempted",
+          answer: "",
+        }));
+
+        setQuestions(initializedQuestions);
+
+        // Get initial challenge status
+        const statusData = await challengeAPI.getChallengeStatus();
+        setSubmissions(statusData.submissions || []);
+
+        // Merge submission execution state into questions
+        const submissionByQid = new Map(
+          (statusData.submissions || []).map((s) => [s.question_id, s])
+        );
+        setQuestions((prev) =>
+          prev.map((q) => {
+            const s = submissionByQid.get(q.id);
+            return s
+              ? {
+                  ...q,
+                  status: s.status || q.status,
+                  answer: s.code_answer ?? q.answer,
+                  is_correct: !!s.is_correct,
+                  is_locked: !!s.is_locked,
+                  attempts: s.attempts ?? 0,
+                  last_result: s.last_result ?? null,
+                }
+              : q;
+          })
+        );
+      } catch (error) {
+        console.error("Failed to initialize challenge:", error);
+        setError("Failed to start challenge. Please try logging in again.");
+        navigate("/login");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     initializeChallenge();
-  }, []);
+  }, [navigate]);
 
   // ---------- FULLSCREEN SHORTCUT ----------
   useEffect(() => {
@@ -35,45 +96,7 @@ export default function Challenge() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const initializeChallenge = async () => {
-    try {
-      setIsLoading(true);
-      setError("");
-
-      // Start challenge session
-      const sessionData = await challengeAPI.startChallenge();
-      setSession(sessionData.session);
-
-      // Load questions
-      const questionsData = await questionsAPI.getPublicQuestions();
-
-      // Initialize questions with API data
-      const initializedQuestions = questionsData.map(q => ({
-        id: q.id,
-        title: q.title,
-        description: q.description,
-        sample_input: q.sample_input,
-        sample_output: q.sample_output,
-        difficulty: q.difficulty,
-        points: q.points,
-        status: "not_attempted",
-        answer: "",
-      }));
-
-      setQuestions(initializedQuestions);
-
-      // Get initial challenge status
-      const statusData = await challengeAPI.getChallengeStatus();
-      setSubmissions(statusData.submissions || []);
-
-    } catch (error) {
-      console.error("Failed to initialize challenge:", error);
-      setError("Failed to start challenge. Please try logging in again.");
-      navigate("/login");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // (initializeChallenge moved inside useEffect to satisfy hook deps)
 
   const markQuestion = async (status) => {
     try {
@@ -100,6 +123,42 @@ export default function Challenge() {
           q.id === current ? { ...q, status: "not_attempted" } : q
         )
       );
+    }
+  };
+
+  const executeCurrent = async () => {
+    const q = questions.find((x) => x.id === current);
+    if (!q) return;
+    if (q.is_locked || q.is_correct) return;
+
+    try {
+      setExecuteStatus((prev) => ({ ...prev, [current]: { loading: true } }));
+
+      const res = await challengeAPI.executeSubmission(current, q.answer || "");
+
+      setQuestions((prev) =>
+        prev.map((item) =>
+          item.id === current
+            ? {
+                ...item,
+                attempts: res.attempts,
+                last_result: res.result,
+                is_correct: res.is_correct,
+                is_locked: res.is_locked,
+                status: res.is_correct ? "submitted" : item.status,
+              }
+            : item
+        )
+      );
+
+      setExecuteStatus((prev) => ({
+        ...prev,
+        [current]: { loading: false, result: res.result, attempts: res.attempts },
+      }));
+    } catch (e) {
+      console.error("Execute failed:", e);
+      setExecuteStatus((prev) => ({ ...prev, [current]: { loading: false, error: true } }));
+      alert("Execute failed. Please try again.");
     }
   };
 
@@ -168,6 +227,7 @@ export default function Challenge() {
   };
 
   const currentQuestion = questions.find((q) => q.id === current);
+  const execState = executeStatus[current] || {};
 
   if (isLoading) {
     return (
@@ -312,7 +372,7 @@ export default function Challenge() {
           {/* Code Area */}
           <textarea
   rows="8"
-  value={currentQuestion.answer}
+  value={currentQuestion?.answer || ""}
   onChange={(e) =>
     setQuestions((prev) =>
       prev.map((q) =>
@@ -325,7 +385,27 @@ export default function Challenge() {
   className="w-full bg-black/30 border border-gray-600 rounded p-3 mb-4
              focus:outline-none focus:ring-2 focus:ring-purple-500"
   placeholder="Write your Bro Code solution here..."
+  disabled={!!currentQuestion?.is_locked}
 />
+
+          {/* Execute */}
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <button
+              onClick={executeCurrent}
+              disabled={!currentQuestion || currentQuestion.is_locked || execState.loading}
+              className="bg-purple-600 px-4 py-2 rounded-full disabled:opacity-40 hover:scale-105 transition"
+            >
+              {execState.loading ? "Executing..." : currentQuestion?.is_locked ? "Correct (Locked)" : "Execute"}
+            </button>
+
+            <div className="text-sm text-gray-300">
+              {typeof currentQuestion?.attempts === "number" && (
+                <span className="mr-4">Attempts: <b>{currentQuestion.attempts}</b></span>
+              )}
+              {currentQuestion?.last_result === 1 && <span className="text-green-400"><b>Result: Correct</b></span>}
+              {currentQuestion?.last_result === 0 && <span className="text-red-400"><b>Result: Wrong</b></span>}
+            </div>
+          </div>
 
           {/* Bottom Controls */}
           <div className="flex justify-between items-center mt-6">

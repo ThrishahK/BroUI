@@ -16,13 +16,22 @@ export default function Home() {
         </p>
 
         <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => navigate("/login")}
-            className="px-6 py-3 bg-purple-600 rounded-full
-                       hover:scale-105 hover:glow-purple transition-all duration-300"
-          >
-            Login
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-6 py-3 bg-purple-600 rounded-full
+                         hover:scale-105 hover:glow-purple transition-all duration-300"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => navigate("/leaderboard")}
+              className="px-6 py-3 bg-white/10 rounded-full
+                         hover:scale-105 transition-all duration-300"
+            >
+              Leaderboard
+            </button>
+          </div>
         </div>
       </div>
     </div>
