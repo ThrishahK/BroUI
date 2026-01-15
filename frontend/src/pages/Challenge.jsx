@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Timer from "../components/Timer";
-import { useEffect } from "react";
-
+import { challengeAPI, questionsAPI } from "../utils/api";
 
 export default function Challenge() {
   const navigate = useNavigate();
 
   const [current, setCurrent] = useState(1);
   const [uploadedFile, setUploadedFile] = useState(null);
-// ---------- FULLSCREEN SHORTCUT ----------
+  const [questions, setQuestions] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [session, setSession] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Initialize challenge on component mount
+  useEffect(() => {
+    initializeChallenge();
+  }, []);
+
+  // ---------- FULLSCREEN SHORTCUT ----------
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key.toLowerCase() === "f") {
@@ -24,21 +34,73 @@ export default function Challenge() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-  const [questions, setQuestions] = useState(
-    Array.from({ length: 30 }, (_, i) => ({
-      id: i + 1,
-      status: "not_attempted", // saved | flagged
-      text: "",
-       answer: "",
-    }))
-  );
 
-  const markQuestion = (status) => {
-    setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === current ? { ...q, status } : q
-      )
-    );
+  const initializeChallenge = async () => {
+    try {
+      setIsLoading(true);
+      setError("");
+
+      // Start challenge session
+      const sessionData = await challengeAPI.startChallenge();
+      setSession(sessionData.session);
+
+      // Load questions
+      const questionsData = await questionsAPI.getPublicQuestions();
+
+      // Initialize questions with API data
+      const initializedQuestions = questionsData.map(q => ({
+        id: q.id,
+        title: q.title,
+        description: q.description,
+        sample_input: q.sample_input,
+        sample_output: q.sample_output,
+        difficulty: q.difficulty,
+        points: q.points,
+        status: "not_attempted",
+        answer: "",
+      }));
+
+      setQuestions(initializedQuestions);
+
+      // Get initial challenge status
+      const statusData = await challengeAPI.getChallengeStatus();
+      setSubmissions(statusData.submissions || []);
+
+    } catch (error) {
+      console.error("Failed to initialize challenge:", error);
+      setError("Failed to start challenge. Please try logging in again.");
+      navigate("/login");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const markQuestion = async (status) => {
+    try {
+      // Update question status locally first for immediate UI feedback
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === current ? { ...q, status } : q
+        )
+      );
+
+      // Update submission via API
+      const currentQuestion = questions.find((q) => q.id === current);
+      if (currentQuestion) {
+        await challengeAPI.updateSubmission(current, {
+          code_answer: currentQuestion.answer,
+          status: status,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to update submission:", error);
+      // Revert local change on error
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === current ? { ...q, status: "not_attempted" } : q
+        )
+      );
+    }
   };
 
   // ---------- RESULT STATS ----------
@@ -56,19 +118,34 @@ export default function Challenge() {
   };
 
   // ---------- MANUAL SUBMIT ----------
-  const manualSubmit = () => {
+  const manualSubmit = async () => {
     const confirmSubmit = window.confirm(
       "Are you sure you want to submit the challenge? You will not be able to make changes after submission."
     );
 
     if (confirmSubmit) {
-      const stats = getStats();
-      navigate("/result", { state: stats });
+      try {
+        // Prepare submissions data
+        const submissions = questions.map(q => ({
+          question_id: q.id,
+          code_answer: q.answer,
+          status: q.status,
+        }));
+
+        // Submit challenge
+        const response = await challengeAPI.submitChallenge(submissions);
+
+        // Navigate to result page with stats
+        navigate("/result", { state: response });
+      } catch (error) {
+        console.error("Failed to submit challenge:", error);
+        alert("Failed to submit challenge. Please try again.");
+      }
     }
   };
 
   // ---------- FILE UPLOAD ----------
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -77,10 +154,48 @@ export default function Challenge() {
       return;
     }
 
-    setUploadedFile(file);
+    try {
+      setUploadedFile(file);
+
+      // Upload file via API
+      const response = await challengeAPI.uploadFile(current, file);
+      console.log("File uploaded successfully:", response);
+    } catch (error) {
+      console.error("File upload failed:", error);
+      alert("Failed to upload file. Please try again.");
+      setUploadedFile(null);
+    }
   };
 
   const currentQuestion = questions.find((q) => q.id === current);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading challenge...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <h2 className="text-2xl font-bold text-red-400 mb-4">Error</h2>
+          <p className="text-gray-300 mb-6">{error}</p>
+          <button
+            onClick={() => navigate("/login")}
+            className="bg-purple-600 px-6 py-3 rounded-full hover:scale-105 transition"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white flex relative overflow-hidden">
@@ -134,13 +249,38 @@ export default function Challenge() {
             <h2 className="font-semibold text-purple-300 mb-2">
               Problem Statement
             </h2>
-            {currentQuestion.text ? (
-              <p className="text-gray-200 whitespace-pre-line">
-                {currentQuestion.text}
-              </p>
+            {currentQuestion ? (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-purple-200">
+                  {currentQuestion.title}
+                </h3>
+                <p className="text-gray-200 whitespace-pre-line">
+                  {currentQuestion.description}
+                </p>
+                {currentQuestion.sample_input && (
+                  <div>
+                    <h4 className="text-purple-300 font-medium mb-1">Sample Input:</h4>
+                    <pre className="bg-black/50 p-2 rounded text-sm text-gray-300">
+                      {currentQuestion.sample_input}
+                    </pre>
+                  </div>
+                )}
+                {currentQuestion.sample_output && (
+                  <div>
+                    <h4 className="text-purple-300 font-medium mb-1">Sample Output:</h4>
+                    <pre className="bg-black/50 p-2 rounded text-sm text-gray-300">
+                      {currentQuestion.sample_output}
+                    </pre>
+                  </div>
+                )}
+                <div className="flex gap-4 text-sm">
+                  <span className="text-blue-400">Difficulty: {currentQuestion.difficulty}</span>
+                  <span className="text-green-400">Points: {currentQuestion.points}</span>
+                </div>
+              </div>
             ) : (
               <p className="text-gray-400 italic">
-                Question will appear here when loaded.
+                Loading question...
               </p>
             )}
           </div>

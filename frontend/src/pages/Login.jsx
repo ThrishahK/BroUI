@@ -1,25 +1,40 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authAPI } from "../utils/api";
 
 export default function Login() {
   const navigate = useNavigate();
-
   const [usn, setUsn] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const cleanedUSN = usn.trim().toUpperCase();
     const cleanedPassword = password.trim();
 
     if (!cleanedUSN || !cleanedPassword) {
-      alert("Both Team Leader USN and Password are required.");
+      setError("Both Team Leader USN and Password are required.");
       return;
     }
 
-    // Store for later use if needed
-    localStorage.setItem("team_leader_usn", cleanedUSN);
+    setIsLoading(true);
+    setError("");
 
-    navigate("/docs");
+    try {
+      const response = await authAPI.login(cleanedUSN, cleanedPassword);
+
+      // Store team info for later use
+      localStorage.setItem("team_leader_usn", cleanedUSN);
+
+      // Navigate to docs page
+      navigate("/docs");
+    } catch (error) {
+      console.error("Login failed:", error);
+      setError(error.message || "Login failed. Please check your credentials.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,12 +64,18 @@ export default function Login() {
                      focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
 
+        {error && (
+          <p className="text-red-400 text-sm mb-4 text-center">{error}</p>
+        )}
+
         <button
           onClick={handleLogin}
+          disabled={isLoading}
           className="w-full bg-purple-600 py-3 rounded-full
-                     hover:scale-105 hover:glow-purple transition-all duration-300"
+                     hover:scale-105 hover:glow-purple transition-all duration-300
+                     disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Login
+          {isLoading ? "Logging in..." : "Login"}
         </button>
       </div>
     </div>

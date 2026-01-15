@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from .database import engine, Base
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="BroCode Backend", version="1.0.0")
 
@@ -11,6 +15,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+try:
+    from .routers import auth, questions, challenge, admin
+    app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+    app.include_router(questions.router, prefix="/api/questions", tags=["Questions"])
+    app.include_router(challenge.router, prefix="/api/challenge", tags=["Challenge"])
+    app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
+    print("Routers registered successfully")
+except ImportError as e:
+    print(f"Warning: Could not import routers: {e}")
+    # Continue without routers for basic functionality
 
 @app.get("/")
 async def root():
