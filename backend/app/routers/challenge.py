@@ -166,6 +166,7 @@ async def update_submission(
 
 
 @router.post("/execute/{question_id}", response_model=ExecuteResponse)
+@router.post("/execute/{question_id}", response_model=ExecuteResponse)
 async def execute_submission(
     question_id: int,
     payload: ExecuteRequest,
@@ -173,23 +174,22 @@ async def execute_submission(
     current_team: Team = Depends(get_current_team)
 ):
     """
-    Execute/judge a submission using the external Execute API.
-
-    Rules:
-    - User can execute multiple times until the submission becomes correct.
-    - Once correct, the submission is locked (no further executes).
+    Dummy execution logic (Placeholder for E2B Sandbox).
+    Simulates a 'Correct' result for testing purposes.
     """
-    session = get_active_challenge_session(current_team.id, db)
+    session = get_active_challenge_session(current_team.id, db) 
     if not session:
         raise HTTPException(status_code=404, detail="No active challenge session found")
 
     submission = db.query(Submission).filter(
         Submission.challenge_session_id == session.id,
         Submission.question_id == question_id
-    ).first()
+    ).first() 
+    
     if not submission:
         raise HTTPException(status_code=404, detail="Submission not found")
 
+    # If already correct/locked, return existing state
     if submission.is_locked or submission.is_correct:
         return {
             "question_id": question_id,
@@ -199,47 +199,28 @@ async def execute_submission(
             "is_locked": submission.is_locked,
         }
 
-    if not EXECUTE_API_BASE_URL:
-        raise HTTPException(status_code=503, detail="Execute API is not configured")
+    # Persist the code answer to the database
+    submission.code_answer = payload.code_answer 
+    submission.submitted_at = datetime.utcnow() 
 
-    # Persist latest answer before execute
-    submission.code_answer = payload.code_answer
-    submission.submitted_at = datetime.utcnow()
+    # --- DUMMY LOGIC: Simulates a vibe check ---
+    # Any code longer than 10 characters is considered "Correct" (result: 1)
+    is_code_valid = len(payload.code_answer.strip()) > 10
+    result = 1 if is_code_valid else 0
 
-    headers = {}
-    if EXECUTE_API_TOKEN:
-        headers["Authorization"] = f"Bearer {EXECUTE_API_TOKEN}"
-
-    # Expected Execute API behavior:
-    # - returns JSON containing { result: 1 } for correct and { result: 0 } for wrong
-    # We also send qnid so the executor can select testcases.
-    request_body = {
-        "question_id": question_id,
-        "code": payload.code_answer,
-        "team": current_team.team_leader_usn,
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=EXECUTE_API_TIMEOUT_SECONDS) as client:
-            resp = await client.post(f"{EXECUTE_API_BASE_URL}/execute", json=request_body, headers=headers)
-            resp.raise_for_status()
-            data = resp.json()
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"Execute API error: {str(e)}")
-
-    result = 1 if int(data.get("result", 0)) == 1 else 0
-
-    submission.attempts = (submission.attempts or 0) + 1
+    submission.attempts = (submission.attempts or 0) + 1 
     submission.last_result = result
-    submission.last_executed_at = datetime.utcnow()
+    submission.last_executed_at = datetime.utcnow() 
 
     if result == 1:
         submission.is_correct = True
         submission.is_locked = True
-        submission.status = SubmissionStatus.submitted
+        submission.status = SubmissionStatus.submitted 
+    else:
+        submission.status = SubmissionStatus.saved 
 
-    db.commit()
-    db.refresh(submission)
+    db.commit() 
+    db.refresh(submission) 
 
     return {
         "question_id": question_id,
@@ -248,7 +229,6 @@ async def execute_submission(
         "is_correct": submission.is_correct,
         "is_locked": submission.is_locked,
     }
-
 @router.post("/upload/{question_id}")
 async def upload_file(
     question_id: int,

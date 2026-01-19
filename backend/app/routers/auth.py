@@ -78,22 +78,33 @@ async def login_for_access_token(
     db: Session = Depends(get_db)
 ):
     """Login endpoint for teams."""
-    team = authenticate_team(
-        db,
-        team_leader_usn=team_credentials.team_leader_usn,
-        password=team_credentials.password
-    )
-    if not team:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect USN or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        team = authenticate_team(
+            db,
+            team_leader_usn=team_credentials.team_leader_usn,
+            password=team_credentials.password
         )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": team.team_leader_usn}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+        if not team:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect USN or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": team.team_leader_usn}, expires_delta=access_token_expires
+        )
+        return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"Login error: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 @router.get("/me", response_model=TeamResponse)
 async def read_teams_me(current_team: Team = Depends(get_current_team)):
