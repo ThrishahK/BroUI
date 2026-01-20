@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import os
-import httpx
 
 from ..database import get_db
 from ..models.team import Team
@@ -25,6 +24,7 @@ from ..config import (
     EXECUTE_API_TOKEN,
     EXECUTE_API_TIMEOUT_SECONDS,
 )
+from ..services.judge_service import judge_service
 
 router = APIRouter()
 
@@ -173,11 +173,12 @@ async def execute_submission(
     current_team: Team = Depends(get_current_team)
 ):
     """
-    Execute/judge a submission using the external Execute API.
+    Execute/judge a submission using external judge API.
 
     Rules:
     - User can execute multiple times until the submission becomes correct.
     - Once correct, the submission is locked (no further executes).
+    - Judge API returns 1 for correct, 0 for wrong.
     """
     session = get_active_challenge_session(current_team.id, db)
     if not session:
@@ -199,36 +200,25 @@ async def execute_submission(
             "is_locked": submission.is_locked,
         }
 
-    if not EXECUTE_API_BASE_URL:
-        raise HTTPException(status_code=503, detail="Execute API is not configured")
+    # Fetch question to get question_id (E01, M04, etc.)
+    question = db.query(Question).filter(Question.id == question_id).first()
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
 
     # Persist latest answer before execute
     submission.code_answer = payload.code_answer
     submission.submitted_at = datetime.utcnow()
 
-    headers = {}
-    if EXECUTE_API_TOKEN:
-        headers["Authorization"] = f"Bearer {EXECUTE_API_TOKEN}"
-
-    # Expected Execute API behavior:
-    # - returns JSON containing { result: 1 } for correct and { result: 0 } for wrong
-    # We also send qnid so the executor can select testcases.
-    request_body = {
-        "question_id": question_id,
-        "code": payload.code_answer,
-        "team": current_team.team_leader_usn,
-    }
-
     try:
-        async with httpx.AsyncClient(timeout=EXECUTE_API_TIMEOUT_SECONDS) as client:
-            resp = await client.post(f"{EXECUTE_API_BASE_URL}/execute", json=request_body, headers=headers)
-            resp.raise_for_status()
-            data = resp.json()
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"Execute API error: {str(e)}")
+        # Call external judge API
+        result = await judge_service.judge_submission(
+            question_id=question.question_id,
+            code_answer=payload.code_answer
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Judge API error: {str(e)}")
 
-    result = 1 if int(data.get("result", 0)) == 1 else 0
-
+    # Update submission based on judge result
     submission.attempts = (submission.attempts or 0) + 1
     submission.last_result = result
     submission.last_executed_at = datetime.utcnow()

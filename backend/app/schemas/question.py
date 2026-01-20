@@ -1,8 +1,9 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class QuestionBase(BaseModel):
+    question_id: str  # E01, M04, H10, etc.
     title: str
     description: str
     sample_input: Optional[str] = None
@@ -14,6 +15,7 @@ class QuestionCreate(QuestionBase):
     pass
 
 class QuestionUpdate(BaseModel):
+    question_id: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
     sample_input: Optional[str] = None
@@ -34,6 +36,7 @@ class QuestionResponse(QuestionBase):
 class QuestionPublic(BaseModel):
     """Public question data for challenge participants."""
     id: int
+    question_id: str  # E01, M04, H10, etc.
     title: str
     description: str
     sample_input: Optional[str] = None
@@ -43,3 +46,11 @@ class QuestionPublic(BaseModel):
 
     class Config:
         from_attributes = True
+
+class QuestionWithTestCases(QuestionResponse):
+    """Question with test cases for admin."""
+    test_cases: List["TestCaseResponse"] = []
+
+# Import for forward reference
+from .test_case import TestCaseResponse
+QuestionWithTestCases.model_rebuild()
