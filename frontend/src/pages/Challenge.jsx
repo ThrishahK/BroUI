@@ -263,31 +263,36 @@ export default function Challenge() {
      
 
       {/* Sidebar */}
-      <div className="w-72 p-4 bg-black/40 backdrop-blur-md grid grid-cols-5 gap-3 z-10">
-        {questions.map((q) => {
-          const isActive = q.id === current;
+  <div
+  className="w-72 p-4 bg-black/40 backdrop-blur-md
+             grid grid-cols-5 gap-x-3 gap-y-2 auto-rows-min
+             place-items-center z-10"
+>
+  {questions.map((q) => {
+    const isActive = q.id === current;
 
-          return (
-            <button
-              key={q.id}
-              onClick={() => setCurrent(q.id)}
-              className={`h-12 rounded-xl font-bold transition-all duration-300
-                hover:scale-110
-                ${isActive ? "ring-4 ring-purple-400" : ""}
-                ${
-                  q.status === "saved"
-                    ? "bg-green-500 glow-green"
-                    : q.status === "flagged"
-                    ? "bg-blue-500 glow-blue"
-                    : "bg-red-500"
-                }
-              `}
-            >
-              {q.id}
-            </button>
-          );
-        })}
-      </div>
+    return (
+      <button
+        key={q.id}
+        onClick={() => setCurrent(q.id)}
+        className={`w-12 h-12 rounded-xl font-bold transition-all duration-300
+          hover:scale-110
+          ${isActive ? "ring-4 ring-purple-400" : ""}
+          ${
+            q.status === "saved"
+              ? "bg-green-500 glow-green"
+              : q.status === "flagged"
+              ? "bg-blue-500 glow-blue"
+              : "bg-red-500"
+          }
+        `}
+      >
+        {q.id}
+      </button>
+    );
+  })}
+</div>
+
 
       {/* Main */}
       <div className="flex-1 p-10 relative z-10">
@@ -346,7 +351,7 @@ export default function Challenge() {
           </div>
 
           {/* File Upload */}
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label className="block mb-2 font-medium text-purple-300">
               Upload Solution File (.homie)
             </label>
@@ -367,7 +372,7 @@ export default function Challenge() {
                 Uploaded: {uploadedFile.name}
               </p>
             )}
-          </div>
+          </div> */}
 
           {/* Code Area */}
           <textarea
