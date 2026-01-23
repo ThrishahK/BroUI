@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import os
 import httpx
+from test_runner import test_submission
 
 from ..database import get_db
 from ..models.team import Team
@@ -165,7 +166,7 @@ async def update_submission(
     return {"message": "Submission updated successfully"}
 
 
-@router.post("/execute/{question_id}", response_model=ExecuteResponse)
+# @router.post("/execute/{question_id}", response_model=ExecuteResponse)
 @router.post("/execute/{question_id}", response_model=ExecuteResponse)
 async def execute_submission(
     question_id: int,
@@ -173,62 +174,68 @@ async def execute_submission(
     db: Session = Depends(get_db),
     current_team: Team = Depends(get_current_team)
 ):
-    """
-    Dummy execution logic (Placeholder for E2B Sandbox).
-    Simulates a 'Correct' result for testing purposes.
-    """
-    session = get_active_challenge_session(current_team.id, db) 
+    #Verify Active Session
+    session = get_active_challenge_session(current_team.id, db)
     if not session:
         raise HTTPException(status_code=404, detail="No active challenge session found")
 
+    #Get/Create Submission Record
     submission = db.query(Submission).filter(
         Submission.challenge_session_id == session.id,
         Submission.question_id == question_id
-    ).first() 
-    
-    if not submission:
-        raise HTTPException(status_code=404, detail="Submission not found")
+    ).first()
 
-    # If already correct/locked, return existing state
-    if submission.is_locked or submission.is_correct:
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission record not found")
+
+   
+    if submission.is_locked:
         return {
             "question_id": question_id,
-            "result": int(submission.last_result or 1),
+            "result": submission.last_result,
             "attempts": submission.attempts,
             "is_correct": submission.is_correct,
-            "is_locked": submission.is_locked,
+            "is_locked": True
         }
 
-    # Persist the code answer to the database
-    submission.code_answer = payload.code_answer 
-    submission.submitted_at = datetime.utcnow() 
+    formatted_id = f"E{str(question_id).zfill(2)}"
+    
+    # CALL THE STANDALONE RUNNER API
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                "http://localhost:8001/run", 
+                json={"question_id": formatted_id, "code": payload.code_answer},
+                timeout=10.0 # Give it time to run the tests
+            )
+            judgement = response.json()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Execution Service Down")
 
-    # --- DUMMY LOGIC: Simulates a vibe check ---
-    # Any code longer than 10 characters is considered "Correct" (result: 1)
-    is_code_valid = len(payload.code_answer.strip()) > 10
-    result = 1 if is_code_valid else 0
+    is_correct = (judgement["status"] == "PASS")
 
-    submission.attempts = (submission.attempts or 0) + 1 
-    submission.last_result = result
-    submission.last_executed_at = datetime.utcnow() 
+    #Update Database
+    submission.code_answer = payload.code_answer
+    submission.attempts = (submission.attempts or 0) + 1
+    submission.last_result = 1 if is_correct else 0
+    submission.is_correct = is_correct
+    submission.is_locked = is_correct # Lock if fully correct
+    submission.last_executed_at = datetime.utcnow()
+    
+    if is_correct:
+        submission.status = "submitted"
 
-    if result == 1:
-        submission.is_correct = True
-        submission.is_locked = True
-        submission.status = SubmissionStatus.submitted 
-    else:
-        submission.status = SubmissionStatus.saved 
-
-    db.commit() 
-    db.refresh(submission) 
+    db.commit()
+    db.refresh(submission)
 
     return {
         "question_id": question_id,
-        "result": result,
+        "result": submission.last_result,
         "attempts": submission.attempts,
         "is_correct": submission.is_correct,
         "is_locked": submission.is_locked,
     }
+
 @router.post("/upload/{question_id}")
 async def upload_file(
     question_id: int,

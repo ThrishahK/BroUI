@@ -1,17 +1,17 @@
-# BroCode Challenge Platform
-
+BroCode Challenge Platform
 A full-stack web application for conducting coding challenges with a custom "Bro Code" programming language. Teams compete in time-bound coding challenges with file upload support and real-time progress tracking.
 
-## 🏗️ Architecture
+�️ Architecture
+This project consists of three main components designed for offline reliability:
 
-This project consists of two main components:
+Frontend: React application with modern UI/UX.
 
-- **Frontend**: React application with modern UI/UX
-- **Backend**: FastAPI server with SQLAlchemy ORM
+Main Backend: FastAPI server with SQLAlchemy ORM for auth and data.
 
-## 📁 Project Structure
+Execution API: A standalone service that runs student code against local test cases using the BroCode interpreter.
 
-```
+� Project Structure
+Plaintext
 BroUI/
 ├── @frontend/               # React frontend application
 │   ├── public/
@@ -19,6 +19,7 @@ BroUI/
 │   ├── src/
 │   │   ├── components/       # Reusable UI components
 │   │   ├── pages/           # Application pages/routes
+│   │   │   └── Challenge.jsx # Main competition UI
 │   │   ├── App.jsx          # Main application component
 │   │   └── main.jsx         # Application entry point
 │   ├── package.json
@@ -37,248 +38,144 @@ BroUI/
 │   │   ├── routers/         # API route handlers
 │   │   │   ├── auth.py
 │   │   │   ├── questions.py
-│   │   │   ├── challenge.py
+│   │   │   ├── challenge.py # Updated for local execution
 │   │   │   └── admin.py
 │   │   └── schemas/         # Pydantic schemas
 │   ├── venv/                # Python virtual environment
+│   ├── test_runner.py       # Local judging logic & subprocess runner [NEW]
+│   ├── test_cases.json      # Question test cases (E01-H10) [NEW]
+│   ├── runner_service.py    # Standalone Code Execution API [NEW]
 │   ├── server.py            # Simple server runner
 │   ├── run.py               # Development server runner
 │   ├── requirements.txt     # Python dependencies
 │   ├── .env                 # Backend environment variables
 │   └── .env.example         # Backend environment template
 └── README.md
-```
+� Quick Start (Offline Procedure)
+Prerequisites
+Node.js (v16 or higher)
 
-## 🚀 Quick Start
+Python (v3.8 or higher)
 
-### Prerequisites
+SQLite (for development) or PostgreSQL (for production)
 
-- Node.js (v16 or higher)
-- Python (v3.8 or higher)
-- SQLite (for development) or PostgreSQL (for production)
+BroCode Interpreter: Install via pip install brocode-lang on the Master Laptop.
 
-### Frontend Setup
+1. Standalone Execution API (Runner)
+This service must be running for the "Execute" button to work.
 
-```bash
-cd @frontend
-
-# Copy environment template
-cp .env.example .env
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-The frontend will be available at `http://localhost:5173`
-
-### Backend Setup
-
-```bash
+Bash
 cd backend
+# Ensure virtual environment is active
+python runner_service.py
+The runner service will be available at http://localhost:8001.
 
-# Copy environment template
-cp .env.example .env
+2. Main Backend Setup
+In a new terminal, start the primary application server.
 
-# Create virtual environment
-python3 -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the server
+Bash
+cd backend
 python server.py
-```
+The main API will be available at http://localhost:8000.
 
-The backend will be available at `http://localhost:8000`
+3. Frontend Setup
+Bash
+cd @frontend
+npm install
+npm run dev
+� Configuration (Ethernet / Offline Event)
+Networking
+To run this in an offline environment over Ethernet:
 
-## 🔧 Configuration
+Static IP: Set a static IP on the Master Laptop (e.g., 192.168.1.10).
 
-### Frontend Environment Variables (.env)
+Frontend .env: Point all participant laptops to the Master Laptop: VITE_API_BASE_URL=http://192.168.1.10:8000/api.
 
-```env
-# Backend API Configuration
-VITE_API_BASE_URL=http://localhost:8000/api
+Host Binding: Run the servers with --host 0.0.0.0 to accept incoming Ethernet connections.
 
-# Application Configuration
-VITE_APP_NAME=BroCode Challenge
-VITE_APP_VERSION=1.0.0
-```
-
-### Backend Environment Variables (.env)
-
-```env
+Backend Environment Variables (.env)
+Code snippet
 # Database Configuration
-# For development (SQLite)
 DATABASE_URL=sqlite:///./brocode.db
 
-# For production (PostgreSQL)
-# DATABASE_URL=postgresql://username:password@localhost:5432/brocode_db
+# Offline Execution Config
+# Main backend will call this local address for code checking
+EXECUTION_SERVICE_URL=http://localhost:8001/run
+� API Documentation
+Once the backend is running, visit http://localhost:8000/docs for interactive API documentation powered by Swagger UI.
 
-# JWT Configuration
-SECRET_KEY=your-super-secret-key-change-this-in-production-make-it-long-and-random
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+�️ Database Schema
+Core Models
+Team
+Team authentication and profile information
 
-# Application Configuration
-DEBUG=True
-CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+USN-based identification system
 
-# Challenge Configuration
-CHALLENGE_DURATION_MINUTES=180
-MAX_QUESTIONS=30
+Question
+Challenge problems with descriptions and test cases
 
-# File Upload Configuration
-UPLOAD_DIR=uploads
-ALLOWED_EXTENSIONS=.homie
-```
+Difficulty levels and point values
 
-## 📚 API Documentation
+ChallengeSession
+Time-bound coding sessions per team
 
-Once the backend is running, visit `http://localhost:8000/docs` for interactive API documentation powered by Swagger UI.
+Session state management
 
-### Key API Endpoints
+Submission
+Individual question submissions
 
-#### Authentication
-- `POST /api/auth/login` - Team login
-- `GET /api/auth/me` - Get current team info
+File upload support for .homie files
 
-#### Questions
-- `GET /api/questions/public/all` - Get all active questions
-- `GET /api/questions/public/{id}` - Get specific question
+Status tracking (saved, flagged, submitted, passed)
 
-#### Challenge
-- `POST /api/challenge/start` - Start challenge session
-- `GET /api/challenge/status` - Get current challenge status
-- `PUT /api/challenge/submission/{question_id}` - Update submission
-- `POST /api/challenge/upload/{question_id}` - Upload solution file
-- `POST /api/challenge/submit` - Submit entire challenge
+� Features
+For Participants
+Team-based Authentication: Login with team leader USN and password
 
-#### Admin (Requires Authentication)
-- `GET /api/admin/teams` - Manage teams
-- `GET /api/admin/sessions` - View challenge sessions
-- `GET /api/questions/` - CRUD operations for questions
+Documentation Access: Download BroCode language documentation
 
-## 🗄️ Database Schema
+Offline Code Judging: Real-time evaluation using local test cases
 
-### Core Models
+Question Management: Navigate through 30 questions with status tracking
 
-#### Team
-- Team authentication and profile information
-- USN-based identification system
+File Upload: Submit .homie files for code solutions
 
-#### Question
-- Challenge problems with descriptions and test cases
-- Difficulty levels and point values
+Automatic Locking: Once a question is marked PASS by the runner, it is locked in the UI
 
-#### ChallengeSession
-- Time-bound coding sessions per team
-- Session state management
+Real-time Timer: Countdown with localStorage persistence
 
-#### Submission
-- Individual question submissions
-- File upload support for .homie files
-- Status tracking (saved, flagged, submitted)
+For Administrators
+Team Management: Register and manage participating teams
 
-## 🎯 Features
+Question Bank: Create and manage coding challenges
 
-### For Participants
-- **Team-based Authentication**: Login with team leader USN and password
-- **Documentation Access**: Download BroCode language documentation
-- **Timed Challenges**: 3-hour coding sessions with auto-submit
-- **Question Management**: Navigate through 30 questions with status tracking
-- **File Upload**: Submit .homie files for code solutions
-- **Progress Tracking**: Visual indicators for saved/flagged/unattempted questions
-- **Real-time Timer**: Countdown with localStorage persistence
+Session Monitoring: Track active challenge sessions
 
-### For Administrators
-- **Team Management**: Register and manage participating teams
-- **Question Bank**: Create and manage coding challenges
-- **Session Monitoring**: Track active challenge sessions
-- **Results Analysis**: View submission statistics and results
-- **Challenge Control**: Enable/disable challenges globally
+Results Analysis: View submission statistics and results
 
-## 🛠️ Development
+Challenge Control: Enable/disable challenges globally
 
-### Frontend Development
-
-```bash
+�️ Development
+Frontend Development
+Bash
 cd @frontend
 npm run dev          # Start development server
 npm run build        # Build for production
-npm run preview      # Preview production build
-npm run lint         # Run ESLint
-```
-
-### Backend Development
-
-```bash
+Backend Development
+Bash
 cd backend
-
-# Activate virtual environment
 source venv/bin/activate
-
-# Run with auto-reload
-python run.py
-
-# Or run the simple server
-python server.py
-```
-
-### Database Migrations
-
-The application uses SQLAlchemy with automatic table creation. For production deployments, consider using Alembic for proper migration management.
-
-## 🚀 Deployment
-
-### Frontend Deployment
-```bash
-cd @frontend
-npm run build
-# Deploy the dist/ directory to your web server
-```
-
-### Backend Deployment
-```bash
-cd backend
-
-# Install production dependencies
-pip install fastapi uvicorn sqlalchemy psycopg2-binary
-
+python run.py        # Run with auto-reload
+� Deployment
+Backend Deployment
+Bash
 # Set production environment variables
 export DATABASE_URL="postgresql://user:pass@host:port/db"
-export SECRET_KEY="your-production-secret-key"
-
-# Run with production server
 uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📝 License
-
+� License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🆘 Support
+� Acknowledgments
+Built with React, FastAPI, and Tailwind CSS
 
-For support or questions:
-- Check the API documentation at `/docs`
-- Review the BroCode language documentation
-- Create an issue in the repository
-
-## 🎉 Acknowledgments
-
-- Built with React, FastAPI, and Tailwind CSS
-- Inspired by competitive programming platforms
-- Custom "Bro Code" programming language for unique challenges
+Custom "Bro Code" programming language for unique challenges

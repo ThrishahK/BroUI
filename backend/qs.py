@@ -247,7 +247,7 @@ def populate_questions():
     "sample_input": "Bro Code is lit",
     "sample_output": "4",
     "difficulty": "hard",
-    "points": 5
+  
   },
   {
     "id": 28,
