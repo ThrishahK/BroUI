@@ -6,283 +6,354 @@ def populate_questions():
     
     
     questions_data = [
-        {
-            "id": 1,
-            "title": "The Vibe Check (Sum)",
-            "description": "Write a program that takes two integers as input and prints their sum. Input Format: Two integers on separate lines.",
-            "sample_input": "10\n20",
-            "sample_output": "30",
-            "difficulty": "easy",
-            "points": 2
-        },
-        {
-            "id": 2,
-            "title": "Odd or Even Vibe?",
-            "description": "Check if a given number is even or odd. Print 'Even' if even, 'Odd' if odd. Input Format: Single integer.",
-            "sample_input": "7",
-            "sample_output": "Odd",
-            "difficulty": "easy",
-            "points": 2
-        },
-        {
-            "id": 3,
-            "title": "Who is the Biggest Bro?",
-            "description": "Given two distinct integers, print the larger one. Input Format: Two integers on separate lines.",
-            "sample_input": "50\n12",
-            "sample_output": "50",
-            "difficulty": "easy",
-            "points": 2
-        },
-        {
-            "id": 4,
-            "title": "Simple Countdown",
-            "description": "Read an integer N. Print numbers from N down to 1 separated by spaces.",
-            "sample_input": "5",
-            "sample_output": "5 4 3 2 1",
-            "difficulty": "easy",
-            "points": 2
-        },
-        {
-            "id": 5,
-            "title": "Echo Chamber",
-            "description": "Take a string input and print it repeated 3 times with spaces in between.",
-            "sample_input": "Bro",
-            "sample_output": "Bro Bro Bro",
-            "difficulty": "easy",
-            "points": 2
-        },
-        {
-            "id": 6,
-            "title": "Positive Vibes Only",
-            "description": "Read an integer. If it's negative, convert it to positive. If positive, keep it as is.",
-            "sample_input": "-42",
-            "sample_output": "42",
-            "difficulty": "easy",
-            "points": 2
-        },
-        {
-            "id": 7,
-            "title": "String Length",
-            "description": "Calculate the length of a given string.",
-            "sample_input": "BroCode",
-            "sample_output": "7",
-            "difficulty": "easy",
-            "points": 2
-        },
-        {
-            "id": 8,
-            "title": "Celsius to Fahrenheit",
-            "description": "Convert temperature from Celsius to Fahrenheit. Formula: (c*9/5)+32. Output rounded to nearest integer.",
-            "sample_input": "25",
-            "sample_output": "77",
-            "difficulty": "easy",
-            "points": 2
-        },
-        {
-            "id": 9,
-            "title": "First Character",
-            "description": "Print the first character of the given string.",
-            "sample_input": "Pizza",
-            "sample_output": "P",
-            "difficulty": "easy",
-            "points": 2
-        },
-        {
-            "id": 10,
-            "title": "Cube It",
-            "description": "Calculate the cube of a number (N * N * N).",
-            "sample_input": "3",
-            "sample_output": "27",
-            "difficulty": "easy",
-            "points": 2
-        },
-         {
-    "id": 11,
+  {
+    "id": "E01",
+    "title": "The Vibe Check (Sum)",
+    "description": "Write a program that takes two integers as input and prints their sum.",
+    "input_format": "Two integers on separate lines.",
+    "output_format": "A single integer representing the sum.",
+    "sample_input": "10\n20",
+    "sample_output": "30",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "E02",
+    "title": "Odd or Even Vibe?",
+    "description": "Check if a given number is even or odd.",
+    "input_format": "Single integer.",
+    "output_format": "Print \"Even\" or \"Odd\".",
+    "sample_input": "7",
+    "sample_output": "Odd",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "E03",
+    "title": "Who is the Biggest Bro?",
+    "description": "Given two distinct integers, print the larger one.",
+    "input_format": "Two integers on separate lines.",
+    "output_format": "The larger integer.",
+    "sample_input": "50\n12",
+    "sample_output": "50",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "E04",
+    "title": "Simple Countdown",
+    "description": "Print numbers from N down to 1.",
+    "input_format": "Single integer N.",
+    "output_format": "Numbers separated by space.",
+    "sample_input": "5",
+    "sample_output": "5 4 3 2 1",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "E05",
+    "title": "Echo Chamber",
+    "description": "Print the given string three times separated by spaces.",
+    "input_format": "Single string.",
+    "output_format": "String repeated three times.",
+    "sample_input": "Bro",
+    "sample_output": "Bro Bro Bro",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "E06",
+    "title": "Positive Vibes Only",
+    "description": "Convert a negative number to positive.",
+    "input_format": "Single integer.",
+    "output_format": "Positive integer.",
+    "sample_input": "-42",
+    "sample_output": "42",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "E07",
+    "title": "String Length",
+    "description": "Calculate the length of a string.",
+    "input_format": "Single string.",
+    "output_format": "Integer length.",
+    "sample_input": "BroCode",
+    "sample_output": "7",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "E08",
+    "title": "Celsius to Fahrenheit",
+    "description": "Convert Celsius to Fahrenheit using (C * 9/5) + 32.",
+    "input_format": "Integer Celsius value.",
+    "output_format": "Integer Fahrenheit value.",
+    "sample_input": "25",
+    "sample_output": "77",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "E09",
+    "title": "First Character",
+    "description": "Print the first character of a string.",
+    "input_format": "Single string.",
+    "output_format": "First character.",
+    "sample_input": "Pizza",
+    "sample_output": "P",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "E10",
+    "title": "Cube It",
+    "description": "Calculate the cube of a number.",
+    "input_format": "Single integer.",
+    "output_format": "Cubed value.",
+    "sample_input": "3",
+    "sample_output": "27",
+    "difficulty": "easy",
+    "points": 2
+  },
+  {
+    "id": "M01",
     "title": "Reverse the Hype",
     "description": "Reverse a given string.",
+    "input_format": "Single string.",
+    "output_format": "Reversed string.",
     "sample_input": "Hello",
     "sample_output": "olleH",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 12,
+    "id": "M02",
     "title": "Factorial Fun",
-    "description": "Calculate the factorial of a non-negative integer N.",
+    "description": "Calculate factorial of a non-negative integer.",
+    "input_format": "Single integer N.",
+    "output_format": "Factorial of N.",
     "sample_input": "5",
     "sample_output": "120",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 13,
+    "id": "M03",
     "title": "FizzBuzz Classic",
-    "description": "Print numbers from 1 to N, replacing multiples of 3 with 'Fizz', 5 with 'Buzz', and both with 'FizzBuzz'.",
+    "description": "Print numbers from 1 to N with FizzBuzz rules.",
+    "input_format": "Single integer N.",
+    "output_format": "Space separated values.",
     "sample_input": "5",
     "sample_output": "1 2 Fizz 4 Buzz",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 14,
+    "id": "M04",
     "title": "Array Max",
-    "description": "Find the maximum value in an array of integers.",
+    "description": "Find the maximum number in an array.",
+    "input_format": "First line N, second line N integers.",
+    "output_format": "Maximum integer.",
     "sample_input": "5\n10 20 5 100 2",
     "sample_output": "100",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 15,
+    "id": "M05",
     "title": "Palindrome Checker",
-    "description": "Check whether a given string is a palindrome.",
+    "description": "Check if a string is a palindrome.",
+    "input_format": "Single string.",
+    "output_format": "\"True\" or \"False\".",
     "sample_input": "racecar",
     "sample_output": "True",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 16,
+    "id": "M06",
     "title": "Sum of Digits",
-    "description": "Calculate the sum of digits of an integer.",
+    "description": "Calculate sum of digits of an integer.",
+    "input_format": "Single integer.",
+    "output_format": "Sum of digits.",
     "sample_input": "123",
     "sample_output": "6",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 17,
+    "id": "M07",
     "title": "Count Vowels",
-    "description": "Count the number of vowels in a string (case-insensitive).",
+    "description": "Count vowels in a string.",
+    "input_format": "Single string.",
+    "output_format": "Integer count.",
     "sample_input": "BroCode",
     "sample_output": "3",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 18,
+    "id": "M08",
     "title": "Linear Search",
-    "description": "Find the index of a target element in an array using linear search.",
+    "description": "Find index of target element in an array.",
+    "input_format": "Target, N, then N integers.",
+    "output_format": "Index or -1.",
     "sample_input": "5\n4\n10 20 5 30",
     "sample_output": "2",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 19,
+    "id": "M09",
     "title": "Power Up",
-    "description": "Calculate Base raised to the power of Exponent.",
+    "description": "Calculate base raised to exponent.",
+    "input_format": "Base and exponent on separate lines.",
+    "output_format": "Result.",
     "sample_input": "2\n3",
     "sample_output": "8",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 20,
+    "id": "M10",
     "title": "Remove Duplicates",
-    "description": "Remove duplicate characters from a string while keeping the first occurrence.",
+    "description": "Remove duplicate characters from a string.",
+    "input_format": "Single string.",
+    "output_format": "String without duplicates.",
     "sample_input": "banana",
     "sample_output": "ban",
     "difficulty": "medium",
     "points": 3
   },
   {
-    "id": 21,
+    "id": "H01",
     "title": "Prime Time",
-    "description": "Check whether a given number is prime.",
+    "description": "Check if a number is prime.",
+    "input_format": "Single integer.",
+    "output_format": "\"Prime\" or \"Not Prime\".",
     "sample_input": "17",
     "sample_output": "Prime",
     "difficulty": "hard",
     "points": 5
   },
   {
-    "id": 22,
+    "id": "H02",
     "title": "Fibonacci Nth",
-    "description": "Find the Nth number in the Fibonacci sequence where N=1 corresponds to 0.",
+    "description": "Find the Nth Fibonacci number.",
+    "input_format": "Single integer N.",
+    "output_format": "Nth Fibonacci number.",
     "sample_input": "5",
     "sample_output": "3",
     "difficulty": "hard",
     "points": 5
   },
   {
-    "id": 23,
-    "title": "Sort It Out (Bubble Sort)",
-    "description": "Sort an array of integers in ascending order using bubble sort logic.",
+    "id": "H03",
+    "title": "Sort It Out",
+    "description": "Sort an array in ascending order.",
+    "input_format": "N then N integers.",
+    "output_format": "Sorted integers.",
     "sample_input": "4\n3 1 4 2",
     "sample_output": "1 2 3 4",
     "difficulty": "hard",
     "points": 5
   },
   {
-    "id": 24,
+    "id": "H04",
     "title": "Anagram Check",
-    "description": "Check whether two strings are anagrams of each other.",
+    "description": "Check if two strings are anagrams.",
+    "input_format": "Two strings on separate lines.",
+    "output_format": "\"Yes\" or \"No\".",
     "sample_input": "listen\nsilent",
     "sample_output": "Yes",
     "difficulty": "hard",
     "points": 5
   },
   {
-    "id": 25,
+    "id": "H05",
     "title": "Matrix Diagonal Sum",
-    "description": "Calculate the sum of the main diagonal of a square matrix.",
+    "description": "Calculate sum of main diagonal of a matrix.",
+    "input_format": "N then N rows of N integers.",
+    "output_format": "Diagonal sum.",
     "sample_input": "2\n1 2\n3 4",
     "sample_output": "5",
     "difficulty": "hard",
     "points": 5
   },
   {
-    "id": 26,
+    "id": "H06",
     "title": "Second Largest",
     "description": "Find the second largest number in an array.",
+    "input_format": "N then N integers.",
+    "output_format": "Second largest number.",
     "sample_input": "4\n10 20 40 30",
     "sample_output": "30",
     "difficulty": "hard",
     "points": 5
   },
   {
-    "id": 27,
+    "id": "H07",
     "title": "Word Count",
-    "description": "Count the number of words in a given sentence.",
+    "description": "Count number of words in a sentence.",
+    "input_format": "Sentence string.",
+    "output_format": "Word count.",
     "sample_input": "Bro Code is lit",
     "sample_output": "4",
     "difficulty": "hard",
-  
+    "points": 5
   },
   {
-    "id": 28,
+    "id": "H08",
     "title": "Pattern Printing",
-    "description": "Print a right-angled triangle pattern using '*' of height N.",
+    "description": "Print a right-angled triangle pattern.",
+    "input_format": "Single integer N.",
+    "output_format": "Pattern of stars.",
     "sample_input": "3",
     "sample_output": "*\n**\n***",
     "difficulty": "hard",
     "points": 5
   },
   {
-    "id": 29,
+    "id": "H09",
     "title": "Missing Number",
-    "description": "Find the missing number from an array containing numbers from 0 to N.",
+    "description": "Find the missing number in the array.",
+    "input_format": "N then N numbers.",
+    "output_format": "Missing number.",
     "sample_input": "3\n3 0 1",
     "sample_output": "2",
     "difficulty": "hard",
     "points": 5
   },
   {
-    "id": 30,
+    "id": "H10",
     "title": "Bracket Balancer",
-    "description": "Check whether a sequence of round brackets is balanced.",
+    "description": "Check if brackets are balanced.",
+    "input_format": "Bracket string.",
+    "output_format": "\"Balanced\" or \"Unbalanced\".",
     "sample_input": "(())()",
     "sample_output": "Balanced",
     "difficulty": "hard",
     "points": 5
   }
-    ]
+]
+
 
     for q_data in questions_data:
-       
-        exists = db.query(Question).filter(Question.id == q_data["id"]).first()
+        # Check if question already exists by question_id
+        exists = db.query(Question).filter(Question.question_id == q_data["id"]).first()
         if not exists:
-            new_q = Question(**q_data)
+            # Map the data to match the Question model fields
+            new_q = Question(
+                question_id=q_data["id"],
+                title=q_data.get("title", ""),
+                description=q_data.get("description", ""),
+                sample_input=q_data.get("sample_input"),
+                sample_output=q_data.get("sample_output"),
+                difficulty=q_data.get("difficulty", "medium"),
+                points=q_data.get("points", 10),
+                is_active=True
+            )
             db.add(new_q)
     
     db.commit()

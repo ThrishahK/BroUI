@@ -8,6 +8,12 @@ const getAuthHeaders = () => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+// Helper function to get admin auth headers
+const getAdminAuthHeaders = () => {
+  const token = localStorage.getItem('admin_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 // Generic API call function
 const apiCall = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -123,23 +129,249 @@ export const challengeAPI = {
   },
 };
 
-// Admin API (for future use)
+// Admin API
 export const adminAPI = {
+  // Auth
+  login: async (username, password) => {
+    const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!response.ok) {
+      throw new Error('Invalid credentials');
+    }
+    return await response.json();
+  },
+
+  verify: async () => {
+    const url = `${API_BASE_URL}/admin/auth/verify`;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Unauthorized');
+    }
+    return await response.json();
+  },
+
+  // Questions
+  getQuestions: async () => {
+    const url = `${API_BASE_URL}/admin/questions`;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  },
+
+  getQuestionWithTestCases: async (questionId) => {
+    const url = `${API_BASE_URL}/admin/questions/${questionId}`;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  },
+
+  createQuestion: async (questionData) => {
+    const url = `${API_BASE_URL}/admin/questions`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+      body: JSON.stringify(questionData),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  },
+
+  updateQuestion: async (questionId, questionData) => {
+    const url = `${API_BASE_URL}/admin/questions/${questionId}`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+      body: JSON.stringify(questionData),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  },
+
+  deleteQuestion: async (questionId) => {
+    const url = `${API_BASE_URL}/admin/questions/${questionId}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return;
+  },
+
+  // Test Cases
+  getTestCases: async (questionId) => {
+    const url = `${API_BASE_URL}/admin/questions/${questionId}/testcases`;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  },
+
+  createTestCase: async (questionId, testCaseData) => {
+    const url = `${API_BASE_URL}/admin/questions/${questionId}/testcases`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+      body: JSON.stringify(testCaseData),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  },
+
+  updateTestCase: async (testCaseId, testCaseData) => {
+    const url = `${API_BASE_URL}/admin/testcases/${testCaseId}`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+      body: JSON.stringify(testCaseData),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  },
+
+  deleteTestCase: async (testCaseId) => {
+    const url = `${API_BASE_URL}/admin/testcases/${testCaseId}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return;
+  },
+
+  // Teams
   getTeams: async () => {
-    return await apiCall('/admin/teams');
+    const url = `${API_BASE_URL}/admin/teams`;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
   },
 
   createTeam: async (teamData) => {
-    return await apiCall('/admin/teams', {
+    const url = `${API_BASE_URL}/admin/teams`;
+    const response = await fetch(url, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
       body: JSON.stringify(teamData),
     });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
   },
 
+  deleteTeam: async (teamId) => {
+    const url = `${API_BASE_URL}/admin/teams/${teamId}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return;
+  },
+
+  // Sessions
   getSessions: async () => {
-    return await apiCall('/admin/sessions');
+    const url = `${API_BASE_URL}/admin/sessions`;
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
   },
 };
+
+// Helper exports for admin pages
+export const adminLogin = adminAPI.login;
+export const getQuestions = adminAPI.getQuestions;
+export const getQuestionWithTestCases = adminAPI.getQuestionWithTestCases;
+export const createQuestion = adminAPI.createQuestion;
+export const updateQuestion = adminAPI.updateQuestion;
+export const deleteQuestion = adminAPI.deleteQuestion;
+export const getTestCases = adminAPI.getTestCases;
+export const createTestCase = adminAPI.createTestCase;
+export const updateTestCase = adminAPI.updateTestCase;
+export const deleteTestCase = adminAPI.deleteTestCase;
+export const getTeams = adminAPI.getTeams;
+export const createTeam = adminAPI.createTeam;
+export const deleteTeam = adminAPI.deleteTeam;
 
 // Leaderboard API
 export const leaderboardAPI = {

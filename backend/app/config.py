@@ -26,5 +26,9 @@ EXECUTE_API_BASE_URL = config("EXECUTE_API_BASE_URL", default="")
 EXECUTE_API_TOKEN = config("EXECUTE_API_TOKEN", default="")
 EXECUTE_API_TIMEOUT_SECONDS = float(config("EXECUTE_API_TIMEOUT_SECONDS", default=15))
 
+# External Judge API configuration
+JUDGE_API_URL = config("JUDGE_API_URL", default="http://localhost:9000/judge")
+JUDGE_API_TIMEOUT_SECONDS = float(config("JUDGE_API_TIMEOUT_SECONDS", default=30))
+
 # Create upload directory if it doesn't exist
 os.makedirs(UPLOAD_DIR, exist_ok=True)

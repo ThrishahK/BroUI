@@ -26,6 +26,7 @@ from ..config import (
     EXECUTE_API_TOKEN,
     EXECUTE_API_TIMEOUT_SECONDS,
 )
+from ..services.judge_service import judge_service
 
 router = APIRouter()
 
@@ -198,14 +199,17 @@ async def execute_submission(
             "is_locked": True
         }
 
-    formatted_id = f"E{str(question_id).zfill(2)}"
+    # Fetch the question to get its question_id (E01, M04, H10, etc.)
+    question = db.query(Question).filter(Question.id == question_id).first()
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
     
-    # CALL THE STANDALONE RUNNER API
+    # CALL THE STANDALONE RUNNER API with the actual question_id
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
                 "http://localhost:8001/run", 
-                json={"question_id": formatted_id, "code": payload.code_answer},
+                json={"question_id": question.question_id, "code": payload.code_answer},
                 timeout=10.0 # Give it time to run the tests
             )
             judgement = response.json()

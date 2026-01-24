@@ -2,18 +2,28 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Timer from "../components/Timer";
 import { challengeAPI, questionsAPI } from "../utils/api";
+import questionsData from "../data/questions.json";
 
 export default function Challenge() {
   const navigate = useNavigate();
 
-  const [current, setCurrent] = useState(1);
-  const [uploadedFile, setUploadedFile] = useState(null);
+  const [current, setCurrent] = useState(0); // Track question index (0-based)
   const [questions, setQuestions] = useState([]);
   const [_submissions, setSubmissions] = useState([]);
   const [_session, setSession] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [executeStatus, setExecuteStatus] = useState({}); // { [questionId]: { loading, result, attempts } }
+
+  // Shuffle array utility
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
 
   // Initialize challenge on component mount
   useEffect(() => {
@@ -22,16 +32,34 @@ export default function Challenge() {
         setIsLoading(true);
         setError("");
 
-        // Start challenge session
-        const sessionData = await challengeAPI.startChallenge();
-        setSession(sessionData.session);
+        // Step 1: Try to start challenge session (or get existing one)
+        let sessionData;
+        try {
+          sessionData = await challengeAPI.startChallenge();
+          setSession(sessionData.session);
+        } catch (err) {
+          // If session already exists, just get the status instead
+          if (err.message.includes("already has an active")) {
+            console.log("Session already exists, loading status...");
+            const statusData = await challengeAPI.getChallengeStatus();
+            setSession(statusData.session);
+          } else {
+            throw err;
+          }
+        }
 
-        // Load questions
-        const questionsData = await questionsAPI.getPublicQuestions();
+        // Step 2: Fetch all active questions from backend
+        const apiQuestions = await questionsAPI.getPublicQuestions();
+        console.log("Fetched questions:", apiQuestions);
 
-        // Initialize questions with API data
-        const initializedQuestions = questionsData.map((q) => ({
+        if (!apiQuestions || apiQuestions.length === 0) {
+          throw new Error("No questions available from backend");
+        }
+
+        // Step 3: Initialize questions with API data
+        const initializedQuestions = apiQuestions.map((q) => ({
           id: q.id,
+          question_id: q.question_id, // E01, M04, H10, etc.
           title: q.title,
           description: q.description,
           sample_input: q.sample_input,
@@ -40,11 +68,22 @@ export default function Challenge() {
           points: q.points,
           status: "not_attempted",
           answer: "",
+          attempts: 0,
+          is_correct: false,
+          is_locked: false,
+          last_result: null,
         }));
 
-        setQuestions(initializedQuestions);
+        // Step 4: Group questions by difficulty in ascending order (no shuffling)
+        const easyQuestions = initializedQuestions.filter(q => q.question_id?.startsWith('E')).sort((a, b) => a.question_id.localeCompare(b.question_id));
+        const mediumQuestions = initializedQuestions.filter(q => q.question_id?.startsWith('M')).sort((a, b) => a.question_id.localeCompare(b.question_id));
+        const hardQuestions = initializedQuestions.filter(q => q.question_id?.startsWith('H')).sort((a, b) => a.question_id.localeCompare(b.question_id));
+        
+        // Combine: E, M, H (in ascending order)
+        const orderedQuestions = [...easyQuestions, ...mediumQuestions, ...hardQuestions];
+        setQuestions(orderedQuestions);
 
-        // Get initial challenge status
+        // Step 5: Get initial challenge status and merge with questions
         const statusData = await challengeAPI.getChallengeStatus();
         setSubmissions(statusData.submissions || []);
 
@@ -52,6 +91,7 @@ export default function Challenge() {
         const submissionByQid = new Map(
           (statusData.submissions || []).map((s) => [s.question_id, s])
         );
+
         setQuestions((prev) =>
           prev.map((q) => {
             const s = submissionByQid.get(q.id);
@@ -70,7 +110,7 @@ export default function Challenge() {
         );
       } catch (error) {
         console.error("Failed to initialize challenge:", error);
-        setError("Failed to start challenge. Please try logging in again.");
+        setError(error.message || "Failed to start challenge. Please try logging in again.");
         navigate("/login");
       } finally {
         setIsLoading(false);
@@ -99,46 +139,57 @@ export default function Challenge() {
   // (initializeChallenge moved inside useEffect to satisfy hook deps)
 
   const markQuestion = async (status) => {
+    const currentQ = questions[current];
+    if (!currentQ) return;
+
     try {
       // Update question status locally first for immediate UI feedback
       setQuestions((prev) =>
         prev.map((q) =>
-          q.id === current ? { ...q, status } : q
+          q.id === currentQ.id ? { ...q, status } : q
         )
       );
 
       // Update submission via API
-      const currentQuestion = questions.find((q) => q.id === current);
-      if (currentQuestion) {
-        await challengeAPI.updateSubmission(current, {
-          code_answer: currentQuestion.answer,
-          status: status,
-        });
-      }
+      await challengeAPI.updateSubmission(currentQ.id, {
+        code_answer: currentQ.answer,
+        status: status,
+      });
     } catch (error) {
       console.error("Failed to update submission:", error);
       // Revert local change on error
       setQuestions((prev) =>
         prev.map((q) =>
-          q.id === current ? { ...q, status: "not_attempted" } : q
+          q.id === currentQ.id ? { ...q, status: "not_attempted" } : q
         )
       );
     }
   };
 
   const executeCurrent = async () => {
-    const q = questions.find((x) => x.id === current);
+    const q = questions[current];
     if (!q) return;
-    if (q.is_locked || q.is_correct) return;
+    if (q.is_locked || q.is_correct) {
+      alert("This question is already correct and locked!");
+      return;
+    }
+
+    if (!q.answer || q.answer.trim() === "") {
+      alert("Please write some code before executing!");
+      return;
+    }
 
     try {
-      setExecuteStatus((prev) => ({ ...prev, [current]: { loading: true } }));
+      setExecuteStatus((prev) => ({ ...prev, [q.id]: { loading: true } }));
+      console.log(`Executing question ${q.id} with code:`, q.answer);
 
-      const res = await challengeAPI.executeSubmission(current, q.answer || "");
+      const res = await challengeAPI.executeSubmission(q.id, q.answer);
+      console.log("Execution result:", res);
 
+      // Update the question with the result
       setQuestions((prev) =>
         prev.map((item) =>
-          item.id === current
+          item.id === q.id
             ? {
                 ...item,
                 attempts: res.attempts,
@@ -153,12 +204,20 @@ export default function Challenge() {
 
       setExecuteStatus((prev) => ({
         ...prev,
-        [current]: { loading: false, result: res.result, attempts: res.attempts },
+        [q.id]: { 
+          loading: false, 
+          result: res.result, 
+          attempts: res.attempts,
+          resultMessage: res.is_correct ? "✅ Correct!" : "❌ Wrong. Try again!"
+        },
       }));
     } catch (e) {
       console.error("Execute failed:", e);
-      setExecuteStatus((prev) => ({ ...prev, [current]: { loading: false, error: true } }));
-      alert("Execute failed. Please try again.");
+      setExecuteStatus((prev) => ({ 
+        ...prev, 
+        [q.id]: { loading: false, error: true, errorMessage: e.message } 
+      }));
+      alert("Execute failed: " + e.message);
     }
   };
 
@@ -184,50 +243,32 @@ export default function Challenge() {
 
     if (confirmSubmit) {
       try {
-        // Prepare submissions data
-        const submissions = questions.map(q => ({
-          question_id: q.id,
-          code_answer: q.answer,
-          status: q.status,
-        }));
+        // Prepare submissions data - only include non-empty answers
+        const submissions = questions
+          .filter(q => q.answer && q.answer.trim() !== "")
+          .map(q => ({
+            question_id: q.id,
+            code_answer: q.answer,
+            status: q.status,
+          }));
+
+        console.log("Submitting challenge with submissions:", submissions);
 
         // Submit challenge
         const response = await challengeAPI.submitChallenge(submissions);
+        console.log("Submission response:", response);
 
         // Navigate to result page with stats
         navigate("/result", { state: response });
       } catch (error) {
         console.error("Failed to submit challenge:", error);
-        alert("Failed to submit challenge. Please try again.");
+        alert("Failed to submit challenge: " + error.message);
       }
     }
   };
 
-  // ---------- FILE UPLOAD ----------
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.name.endsWith(".homie")) {
-      alert("Please upload only .homie files.");
-      return;
-    }
-
-    try {
-      setUploadedFile(file);
-
-      // Upload file via API
-      const response = await challengeAPI.uploadFile(current, file);
-      console.log("File uploaded successfully:", response);
-    } catch (error) {
-      console.error("File upload failed:", error);
-      alert("Failed to upload file. Please try again.");
-      setUploadedFile(null);
-    }
-  };
-
-  const currentQuestion = questions.find((q) => q.id === current);
-  const execState = executeStatus[current] || {};
+  const currentQuestion = questions[current];
+  const execState = executeStatus[currentQuestion?.id] || {};
 
   if (isLoading) {
     return (
@@ -262,37 +303,47 @@ export default function Challenge() {
 
      
 
+      
       {/* Sidebar */}
-  <div
-  className="w-72 p-4 bg-black/40 backdrop-blur-md
-             grid grid-cols-5 gap-x-3 gap-y-2 auto-rows-min
-             place-items-center z-10"
->
-  {questions.map((q) => {
-    const isActive = q.id === current;
+<div className="w-80 p-6 bg-black/40 backdrop-blur-md flex flex-col gap-6 z-10 border-r border-purple-500/30 overflow-y-auto">
+  <h2 className="text-xl font-bold text-purple-400 mb-2 px-2">Challenges</h2>
+  
+  {[
+    { label: "Level 1: Easy", range: questions.slice(0, 10) },
+    { label: "Level 2: Medium", range: questions.slice(10, 20) },
+    { label: "Level 3: Hard", range: questions.slice(20, 30) }
+  ].map((group, gIdx) => (
+    <div key={gIdx} className="animate-fadeIn">
+      <p className="text-[10px] text-gray-500 mb-3 px-2 uppercase tracking-[0.2em] font-bold">
+        {group.label}
+      </p>
+      <div className="grid grid-cols-5 gap-2">
+        {group.range.map((q) => {
+          const globalIdx = questions.findIndex(item => item.id === q.id);
+          const isActive = globalIdx === current;
 
-    return (
-      <button
-        key={q.id}
-        onClick={() => setCurrent(q.id)}
-        className={`w-12 h-12 rounded-xl font-bold transition-all duration-300
-          hover:scale-110
-          ${isActive ? "ring-4 ring-purple-400" : ""}
-          ${
-            q.status === "saved"
-              ? "bg-green-500 glow-green"
-              : q.status === "flagged"
-              ? "bg-blue-500 glow-blue"
-              : "bg-red-500"
-          }
-        `}
-      >
-        {q.id}
-      </button>
-    );
-  })}
+          return (
+            <button
+              key={q.id}
+              onClick={() => setCurrent(globalIdx)}
+              className={`h-10 w-full rounded-lg font-bold text-xs transition-all duration-300
+                ${isActive ? "ring-2 ring-white scale-110 z-20" : "opacity-80 hover:opacity-100"}
+                ${
+                  q.is_correct ? "bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]" :
+                  q.status === "flagged" ? "bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]" :
+                  q.attempts > 0 ? "bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]" :
+                  "bg-red-500/40 border border-red-500/50"
+                }
+              `}
+            >
+              {q.id}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  ))}
 </div>
-
 
       {/* Main */}
       <div className="flex-1 p-10 relative z-10">
@@ -303,7 +354,7 @@ export default function Challenge() {
         </div>
 
         <h1 className="text-2xl font-bold mb-6">
-          Question {current}
+          Question {current + 1} {currentQuestion?.question_id && `(${currentQuestion.question_id})`}
         </h1>
 
         {/* Question Card */}
@@ -322,6 +373,27 @@ export default function Challenge() {
                 <p className="text-gray-200 whitespace-pre-line">
                   {currentQuestion.description}
                 </p>
+                
+                {/* Hardcoded Input Instructions */}
+                {/* {currentQuestion.question_id && questionsData[currentQuestion.question_id] && (
+                  <div className="bg-yellow-900/30 border-2 border-yellow-500 rounded-lg p-4">
+                    <h4 className="text-yellow-300 font-bold mb-2 flex items-center gap-2">
+                      <span>⚠️</span>
+                      <span>Use these input values:</span>
+                    </h4>
+                    <div className="bg-black/60 p-3 rounded text-lg text-green-300 font-mono">
+                      {questionsData[currentQuestion.question_id].hardcodedInput
+                        .split('\n')
+                        .map(line => {
+                          const match = line.match(/=\s*(.+);/);
+                          return match ? match[1].trim() : null;
+                        })
+                        .filter(Boolean)
+                        .join(', ')}
+                    </div>
+                  </div>
+                )} */}
+
                 {currentQuestion.sample_input && (
                   <div>
                     <h4 className="text-purple-300 font-medium mb-1">Sample Input:</h4>
@@ -332,7 +404,7 @@ export default function Challenge() {
                 )}
                 {currentQuestion.sample_output && (
                   <div>
-                    <h4 className="text-purple-300 font-medium mb-1">Sample Output:</h4>
+                    <h4 className="text-purple-300 font-medium mb-1">Expected Output:</h4>
                     <pre className="bg-black/50 p-2 rounded text-sm text-gray-300">
                       {currentQuestion.sample_output}
                     </pre>
@@ -350,30 +422,6 @@ export default function Challenge() {
             )}
           </div>
 
-          {/* File Upload */}
-          {/* <div className="mb-4">
-            <label className="block mb-2 font-medium text-purple-300">
-              Upload Solution File (.homie)
-            </label>
-
-            <input
-              type="file"
-              accept=".homie"
-              onChange={handleFileUpload}
-              className="block w-full text-sm text-gray-300
-                         file:mr-4 file:py-2 file:px-4
-                         file:rounded-full file:border-0
-                         file:bg-purple-600 file:text-white
-                         hover:file:glow-purple"
-            />
-
-            {uploadedFile && (
-              <p className="mt-2 text-green-400 text-sm">
-                Uploaded: {uploadedFile.name}
-              </p>
-            )}
-          </div> */}
-
           {/* Code Area */}
           <textarea
   rows="8"
@@ -381,7 +429,7 @@ export default function Challenge() {
   onChange={(e) =>
     setQuestions((prev) =>
       prev.map((q) =>
-        q.id === current
+        q.id === currentQuestion?.id
           ? { ...q, answer: e.target.value }
           : q
       )
@@ -403,12 +451,18 @@ export default function Challenge() {
               {execState.loading ? "Executing..." : currentQuestion?.is_locked ? "Correct (Locked)" : "Execute"}
             </button>
 
-            <div className="text-sm text-gray-300">
+            <div className="text-sm text-gray-300 flex gap-6">
               {typeof currentQuestion?.attempts === "number" && (
-                <span className="mr-4">Attempts: <b>{currentQuestion.attempts}</b></span>
+                <span className="mr-2">Attempts: <b>{currentQuestion.attempts}</b>/5</span>
               )}
-              {currentQuestion?.last_result === 1 && <span className="text-green-400"><b>Result: Correct</b></span>}
-              {currentQuestion?.last_result === 0 && <span className="text-red-400"><b>Result: Wrong</b></span>}
+              {execState.resultMessage && (
+                <span className={execState.resultMessage.includes("✅") ? "text-green-400" : "text-red-400"}>
+                  <b>{execState.resultMessage}</b>
+                </span>
+              )}
+              {execState.errorMessage && (
+                <span className="text-orange-400"><b>Error: {execState.errorMessage}</b></span>
+              )}
             </div>
           </div>
 
@@ -418,7 +472,7 @@ export default function Challenge() {
             {/* Prev / Next */}
             <div className="flex gap-3">
               <button
-                disabled={current === 1}
+                disabled={current === 0}
                 onClick={() => setCurrent(c => c - 1)}
                 className="px-4 py-2 rounded-full bg-gray-700
                            disabled:opacity-40 hover:scale-105 transition"
@@ -427,7 +481,7 @@ export default function Challenge() {
               </button>
 
               <button
-                disabled={current === 30}
+                disabled={current === questions.length - 1}
                 onClick={() => setCurrent(c => c + 1)}
                 className="px-4 py-2 rounded-full bg-gray-700
                            disabled:opacity-40 hover:scale-105 transition"
@@ -457,7 +511,7 @@ export default function Challenge() {
           </div>
 
           {/* Submit */}
-          {current === 30 && (
+          {current === questions.length - 1 && (
             <button
               onClick={manualSubmit}
               className="mt-6 bg-purple-600 px-6 py-3 rounded-full

@@ -1,0 +1,302 @@
+{
+  "E01": {
+    "id": "E01",
+    "title": "The Vibe Check (Sum)",
+    "description": "Read two integers and output their sum.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var a = 10;\nvar b = 20;",
+    "expectedOutput": "30",
+    "hint": "Hardcode the input values: var a = 10; var b = 20; then spit(a + b)"
+  },
+  "E02": {
+    "id": "E02",
+    "title": "Odd or Even Vibe?",
+    "description": "Check if a number is odd or even.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var n = 7;",
+    "expectedOutput": "Odd",
+    "hint": "Hardcode the input: var n = 7; Use modulo % to check if divisible by 2"
+  },
+  "E03": {
+    "id": "E03",
+    "title": "Who is the Biggest Bro?",
+    "description": "Find the maximum of two numbers.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var a = 50;\nvar b = 12;",
+    "expectedOutput": "50",
+    "hint": "Hardcode the inputs: var a = 50; var b = 12; Compare and output the larger"
+  },
+  "E04": {
+    "id": "E04",
+    "title": "Simple Countdown",
+    "description": "Print countdown from n to 1.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var n = 5;",
+    "expectedOutput": "5 4 3 2 1",
+    "hint": "Hardcode the input: var n = 5; Use a loop to count down, output with spaces"
+  },
+  "E05": {
+    "id": "E05",
+    "title": "Echo Chamber",
+    "description": "Print a word three times with spaces.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var word = \"Bro\";",
+    "expectedOutput": "Bro Bro Bro",
+    "hint": "Hardcode the input: var word = \"Bro\"; Output it 3 times with spaces between"
+  },
+  "E06": {
+    "id": "E06",
+    "title": "Positive Vibes Only",
+    "description": "Return absolute value of a number.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var n = -42;",
+    "expectedOutput": "42",
+    "hint": "Hardcode the input: var n = -42; Use abs() or conditional to make positive"
+  },
+  "E07": {
+    "id": "E07",
+    "title": "String Length",
+    "description": "Find the length of a string.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var str = \"BroCode\";",
+    "expectedOutput": "7",
+    "hint": "Hardcode the input: var str = \"BroCode\"; Use len() function"
+  },
+  "E08": {
+    "id": "E08",
+    "title": "Celsius to Fahrenheit",
+    "description": "Convert Celsius to Fahrenheit.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var celsius = 25;",
+    "expectedOutput": "77",
+    "hint": "Hardcode the input: var celsius = 25; Formula: (celsius * 9/5) + 32"
+  },
+  "E09": {
+    "id": "E09",
+    "title": "First Character",
+    "description": "Get the first character of a string.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var str = \"Pizza\";",
+    "expectedOutput": "P",
+    "hint": "Hardcode the input: var str = \"Pizza\"; Use string indexing [0]"
+  },
+  "E10": {
+    "id": "E10",
+    "title": "Cube It",
+    "description": "Calculate the cube of a number.",
+    "difficulty": "easy",
+    "points": 2,
+    "hardcodedInput": "var n = 3;",
+    "expectedOutput": "27",
+    "hint": "Hardcode the input: var n = 3; Calculate n * n * n"
+  },
+  "M01": {
+    "id": "M01",
+    "title": "Reverse the Hype",
+    "description": "Reverse a string.",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var str = \"Hello\";",
+    "expectedOutput": "olleH",
+    "hint": "Hardcode the input: var str = \"Hello\"; Loop backwards or use built-in"
+  },
+  "M02": {
+    "id": "M02",
+    "title": "Factorial Fun",
+    "description": "Calculate factorial of a number.",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var n = 5;",
+    "expectedOutput": "120",
+    "hint": "Hardcode the input: var n = 5; Multiply 5 * 4 * 3 * 2 * 1"
+  },
+  "M03": {
+    "id": "M03",
+    "title": "FizzBuzz Classic",
+    "description": "Print FizzBuzz sequence from 1 to n.",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var n = 5;",
+    "expectedOutput": "1 2 Fizz 4 Buzz",
+    "hint": "Hardcode the input: var n = 5; Fizz if divisible by 3, Buzz by 5, FizzBuzz by both"
+  },
+  "M04": {
+    "id": "M04",
+    "title": "Array Max",
+    "description": "Find maximum value in an array.",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var n = 5;\nvar nums = [10, 20, 5, 100, 2];",
+    "expectedOutput": "100",
+    "hint": "Hardcode array and loop to find max value"
+  },
+  "M05": {
+    "id": "M05",
+    "title": "Palindrome Checker",
+    "description": "Check if a string is a palindrome.",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var str = \"racecar\";",
+    "expectedOutput": "True",
+    "hint": "Hardcode the input: var str = \"racecar\"; Check if equals its reverse"
+  },
+  "M06": {
+    "id": "M06",
+    "title": "Sum of Digits",
+    "description": "Calculate sum of digits in a number.",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var num = \"123\";",
+    "expectedOutput": "6",
+    "hint": "Hardcode the input: var num = \"123\"; Convert to string, loop and sum digits"
+  },
+  "M07": {
+    "id": "M07",
+    "title": "Count Vowels",
+    "description": "Count vowels in a string (case insensitive).",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var str = \"BroCode\";",
+    "expectedOutput": "3",
+    "hint": "Hardcode the input: var str = \"BroCode\"; Check each char if it's a, e, i, o, u"
+  },
+  "M08": {
+    "id": "M08",
+    "title": "Linear Search",
+    "description": "Find index of target value in array.",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var target = 5;\nvar n = 4;\nvar arr = [10, 20, 5, 30];",
+    "expectedOutput": "2",
+    "hint": "Hardcode target and array, return index (or -1 if not found)"
+  },
+  "M09": {
+    "id": "M09",
+    "title": "Power Up",
+    "description": "Calculate base raised to exponent.",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var base = 2;\nvar exp = 3;",
+    "expectedOutput": "8",
+    "hint": "Hardcode the inputs: var base = 2; var exp = 3; Calculate 2^3"
+  },
+  "M10": {
+    "id": "M10",
+    "title": "Remove Duplicates",
+    "description": "Remove duplicate characters from string (keep first occurrence).",
+    "difficulty": "medium",
+    "points": 3,
+    "hardcodedInput": "var str = \"banana\";",
+    "expectedOutput": "ban",
+    "hint": "Hardcode the input: var str = \"banana\"; Keep only first occurrence of each char"
+  },
+  "H01": {
+    "id": "H01",
+    "title": "Prime Time",
+    "description": "Check if a number is prime.",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var n = 17;",
+    "expectedOutput": "Prime",
+    "hint": "Hardcode the input: var n = 17; Check divisibility up to sqrt(n)"
+  },
+  "H02": {
+    "id": "H02",
+    "title": "Fibonacci Nth",
+    "description": "Find the nth Fibonacci number (0-indexed).",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var n = 5;",
+    "expectedOutput": "3",
+    "hint": "Hardcode the input: var n = 5; Sequence: 0,1,1,2,3,5,8... Return 5th element (3)"
+  },
+  "H03": {
+    "id": "H03",
+    "title": "Sort It Out",
+    "description": "Sort array in ascending order.",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var n = 4;\nvar arr = [3, 1, 4, 2];",
+    "expectedOutput": "1 2 3 4",
+    "hint": "Hardcode array and implement bubble/selection sort"
+  },
+  "H04": {
+    "id": "H04",
+    "title": "Anagram Check",
+    "description": "Check if two strings are anagrams.",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var str1 = \"listen\";\nvar str2 = \"silent\";",
+    "expectedOutput": "Yes",
+    "hint": "Hardcode both strings and check if they have same characters"
+  },
+  "H05": {
+    "id": "H05",
+    "title": "Matrix Diagonal Sum",
+    "description": "Sum the main diagonal of a square matrix.",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var n = 2;\nvar matrix = [[1, 2], [3, 4]];",
+    "expectedOutput": "5",
+    "hint": "Hardcode 2x2 matrix, sum matrix[0][0] + matrix[1][1]"
+  },
+  "H06": {
+    "id": "H06",
+    "title": "Second Largest",
+    "description": "Find the second largest number in array.",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var n = 4;\nvar arr = [10, 20, 40, 30];",
+    "expectedOutput": "30",
+    "hint": "Hardcode array and track both max and second max"
+  },
+  "H07": {
+    "id": "H07",
+    "title": "Word Count",
+    "description": "Count words in a string (separated by spaces).",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var str = \"Bro Code is   lit\";",
+    "expectedOutput": "4",
+    "hint": "Hardcode string and split by spaces, count non-empty words"
+  },
+  "H08": {
+    "id": "H08",
+    "title": "Pattern Printing",
+    "description": "Print a pattern of asterisks (n rows).",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var n = 3;",
+    "expectedOutput": "*\n**\n***",
+    "hint": "Hardcode the input: var n = 3; Print 1 star, then 2, then 3 (each on new line)"
+  },
+  "H09": {
+    "id": "H09",
+    "title": "Missing Number",
+    "description": "Find missing number in range [0, n].",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var n = 3;\nvar arr = [3, 0, 1];",
+    "expectedOutput": "2",
+    "hint": "Hardcode array with numbers 0 to n, one missing. Find which one."
+  },
+  "H10": {
+    "id": "H10",
+    "title": "Bracket Balancer",
+    "description": "Check if parentheses are balanced.",
+    "difficulty": "hard",
+    "points": 5,
+    "hardcodedInput": "var str = \"(())()\";",
+    "expectedOutput": "Balanced",
+    "hint": "Hardcode string and use counter (increment for '(', decrement for ')')"
+  }
+}
