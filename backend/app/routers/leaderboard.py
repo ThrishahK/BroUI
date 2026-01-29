@@ -1,4 +1,4 @@
-from typing import List, Optional
+'''from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -9,7 +9,8 @@ from ..models.challenge_session import ChallengeSession
 from ..models.submission import Submission
 from ..models.question import Question
 
-router = APIRouter()
+router = APIRouter(prefix="/api/leaderboard", tags=["Leaderboard"])
+
 
 
 @router.get("/", response_model=List[dict])
@@ -76,3 +77,29 @@ async def get_leaderboard(db: Session = Depends(get_db)):
 
     return leaderboard_rows
 
+'''
+
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+
+from ..database import get_db
+
+router = APIRouter(prefix="/api/leaderboard", tags=["Leaderboard"])
+
+
+@router.get("/")
+def get_leaderboard(db: Session = Depends(get_db)):
+    result = db.execute(text("""
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY score DESC) AS rank,
+            team_name,
+            usn AS team_leader_usn,
+            solved,
+            score
+        FROM leaderboard
+        ORDER BY score DESC
+    """))
+
+    return [dict(row._mapping) for row in result]

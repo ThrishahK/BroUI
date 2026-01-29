@@ -376,9 +376,11 @@ export const deleteTeam = adminAPI.deleteTeam;
 // Leaderboard API
 export const leaderboardAPI = {
   getLeaderboard: async () => {
-    return await apiCall('/leaderboard/');
+    const res = await fetch("http://localhost:8000/api/leaderboard");
+    return res.json();
   },
 };
+
 
 // Health check
 export const healthCheck = async () => {
