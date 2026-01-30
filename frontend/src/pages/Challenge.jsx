@@ -32,7 +32,7 @@ export default function Challenge() {
         setIsLoading(true);
         setError("");
 
-        // Try to start challenge session (or get existing one)
+        // Step 1: Try to start challenge session (or get existing one)
         let sessionData;
         try {
           sessionData = await challengeAPI.startChallenge();
@@ -48,11 +48,16 @@ export default function Challenge() {
           }
         }
 
-        // Load questions
-        const questionsData = await questionsAPI.getPublicQuestions();
+        // Step 2: Fetch all active questions from backend
+        const apiQuestions = await questionsAPI.getPublicQuestions();
+        console.log("Fetched questions:", apiQuestions);
 
-        // Initialize questions with API data
-        const initializedQuestions = questionsData.map((q) => ({
+        if (!apiQuestions || apiQuestions.length === 0) {
+          throw new Error("No questions available from backend");
+        }
+
+        // Step 3: Initialize questions with API data
+        const initializedQuestions = apiQuestions.map((q) => ({
           id: q.id,
           question_id: q.question_id, // E01, M04, H10, etc.
           title: q.title,
@@ -63,19 +68,22 @@ export default function Challenge() {
           points: q.points,
           status: "not_attempted",
           answer: "",
+          attempts: 0,
+          is_correct: false,
+          is_locked: false,
+          last_result: null,
         }));
 
-        // Group questions by difficulty and shuffle within each group
-        const easyQuestions = shuffleArray(initializedQuestions.filter(q => q.question_id?.startsWith('E')));
-        const mediumQuestions = shuffleArray(initializedQuestions.filter(q => q.question_id?.startsWith('M')));
-        const hardQuestions = shuffleArray(initializedQuestions.filter(q => q.question_id?.startsWith('H')));
+        // Step 4: Group questions by difficulty in ascending order (no shuffling)
+        const easyQuestions = initializedQuestions.filter(q => q.question_id?.startsWith('E')).sort((a, b) => a.question_id.localeCompare(b.question_id));
+        const mediumQuestions = initializedQuestions.filter(q => q.question_id?.startsWith('M')).sort((a, b) => a.question_id.localeCompare(b.question_id));
+        const hardQuestions = initializedQuestions.filter(q => q.question_id?.startsWith('H')).sort((a, b) => a.question_id.localeCompare(b.question_id));
         
-        // Combine: E (1-10), M (11-20), H (21-30)
+        // Combine: E, M, H (in ascending order)
         const orderedQuestions = [...easyQuestions, ...mediumQuestions, ...hardQuestions];
-
         setQuestions(orderedQuestions);
 
-        // Get initial challenge status
+        // Step 5: Get initial challenge status and merge with questions
         const statusData = await challengeAPI.getChallengeStatus();
         setSubmissions(statusData.submissions || []);
 
@@ -83,6 +91,7 @@ export default function Challenge() {
         const submissionByQid = new Map(
           (statusData.submissions || []).map((s) => [s.question_id, s])
         );
+
         setQuestions((prev) =>
           prev.map((q) => {
             const s = submissionByQid.get(q.id);
@@ -101,7 +110,7 @@ export default function Challenge() {
         );
       } catch (error) {
         console.error("Failed to initialize challenge:", error);
-        setError("Failed to start challenge. Please try logging in again.");
+        setError(error.message || "Failed to start challenge. Please try logging in again.");
         navigate("/login");
       } finally {
         setIsLoading(false);
@@ -160,13 +169,24 @@ export default function Challenge() {
   const executeCurrent = async () => {
     const q = questions[current];
     if (!q) return;
-    if (q.is_locked || q.is_correct) return;
+    if (q.is_locked || q.is_correct) {
+      alert("This question is already correct and locked!");
+      return;
+    }
+
+    if (!q.answer || q.answer.trim() === "") {
+      alert("Please write some code before executing!");
+      return;
+    }
 
     try {
       setExecuteStatus((prev) => ({ ...prev, [q.id]: { loading: true } }));
+      console.log(`Executing question ${q.id} with code:`, q.answer);
 
-      const res = await challengeAPI.executeSubmission(q.id, q.answer || "");
+      const res = await challengeAPI.executeSubmission(q.id, q.answer);
+      console.log("Execution result:", res);
 
+      // Update the question with the result
       setQuestions((prev) =>
         prev.map((item) =>
           item.id === q.id
@@ -184,12 +204,20 @@ export default function Challenge() {
 
       setExecuteStatus((prev) => ({
         ...prev,
-        [q.id]: { loading: false, result: res.result, attempts: res.attempts },
+        [q.id]: { 
+          loading: false, 
+          result: res.result, 
+          attempts: res.attempts,
+          resultMessage: res.is_correct ? "✅ Correct!" : "❌ Wrong. Try again!"
+        },
       }));
     } catch (e) {
       console.error("Execute failed:", e);
-      setExecuteStatus((prev) => ({ ...prev, [q.id]: { loading: false, error: true } }));
-      alert("Execute failed. Please try again.");
+      setExecuteStatus((prev) => ({ 
+        ...prev, 
+        [q.id]: { loading: false, error: true, errorMessage: e.message } 
+      }));
+      alert("Execute failed: " + e.message);
     }
   };
 
@@ -215,21 +243,26 @@ export default function Challenge() {
 
     if (confirmSubmit) {
       try {
-        // Prepare submissions data
-        const submissions = questions.map(q => ({
-          question_id: q.id,
-          code_answer: q.answer,
-          status: q.status,
-        }));
+        // Prepare submissions data - only include non-empty answers
+        const submissions = questions
+          .filter(q => q.answer && q.answer.trim() !== "")
+          .map(q => ({
+            question_id: q.id,
+            code_answer: q.answer,
+            status: q.status,
+          }));
+
+        console.log("Submitting challenge with submissions:", submissions);
 
         // Submit challenge
         const response = await challengeAPI.submitChallenge(submissions);
+        console.log("Submission response:", response);
 
         // Navigate to result page with stats
         navigate("/result", { state: response });
       } catch (error) {
         console.error("Failed to submit challenge:", error);
-        alert("Failed to submit challenge. Please try again.");
+        alert("Failed to submit challenge: " + error.message);
       }
     }
   };
@@ -270,34 +303,47 @@ export default function Challenge() {
 
      
 
+      
       {/* Sidebar */}
-      <div className="w-72 p-4 bg-black/40 backdrop-blur-md grid grid-cols-5 gap-3 z-10">
-        {questions.map((q, idx) => {
-          const isActive = idx === current;
+<div className="w-80 p-6 bg-black/40 backdrop-blur-md flex flex-col gap-6 z-10 border-r border-purple-500/30 overflow-y-auto">
+  <h2 className="text-xl font-bold text-purple-400 mb-2 px-2">Challenges</h2>
+  
+  {[
+    { label: "Level 1: Easy", range: questions.slice(0, 10) },
+    { label: "Level 2: Medium", range: questions.slice(10, 20) },
+    { label: "Level 3: Hard", range: questions.slice(20, 30) }
+  ].map((group, gIdx) => (
+    <div key={gIdx} className="animate-fadeIn">
+      <p className="text-[10px] text-gray-500 mb-3 px-2 uppercase tracking-[0.2em] font-bold">
+        {group.label}
+      </p>
+      <div className="grid grid-cols-5 gap-2">
+        {group.range.map((q) => {
+          const globalIdx = questions.findIndex(item => item.id === q.id);
+          const isActive = globalIdx === current;
 
           return (
             <button
               key={q.id}
-              onClick={() => setCurrent(idx)}
-              className={`h-12 rounded-xl font-bold transition-all duration-300
-                hover:scale-110
-                ${isActive ? "ring-4 ring-white" : ""}
+              onClick={() => setCurrent(globalIdx)}
+              className={`h-10 w-full rounded-lg font-bold text-xs transition-all duration-300
+                ${isActive ? "ring-2 ring-white scale-110 z-20" : "opacity-80 hover:opacity-100"}
                 ${
-                  q.is_correct
-                    ? "bg-green-500 glow-green"
-                    : q.status === "flagged"
-                    ? "bg-purple-500 glow-purple"
-                    : q.attempts > 0
-                    ? "bg-orange-500 glow-orange"
-                    : "bg-red-500"
+                  q.is_correct ? "bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]" :
+                  q.status === "flagged" ? "bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]" :
+                  q.attempts > 0 ? "bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]" :
+                  "bg-red-500/40 border border-red-500/50"
                 }
               `}
             >
-              {idx + 1}
+              {q.id}
             </button>
           );
         })}
       </div>
+    </div>
+  ))}
+</div>
 
       {/* Main */}
       <div className="flex-1 p-10 relative z-10">
@@ -308,7 +354,7 @@ export default function Challenge() {
         </div>
 
         <h1 className="text-2xl font-bold mb-6">
-          Question {current + 1}
+          Question {current + 1} {currentQuestion?.question_id && `(${currentQuestion.question_id})`}
         </h1>
 
         {/* Question Card */}
@@ -329,7 +375,7 @@ export default function Challenge() {
                 </p>
                 
                 {/* Hardcoded Input Instructions */}
-                {currentQuestion.question_id && questionsData[currentQuestion.question_id] && (
+                {/* {currentQuestion.question_id && questionsData[currentQuestion.question_id] && (
                   <div className="bg-yellow-900/30 border-2 border-yellow-500 rounded-lg p-4">
                     <h4 className="text-yellow-300 font-bold mb-2 flex items-center gap-2">
                       <span>⚠️</span>
@@ -346,7 +392,7 @@ export default function Challenge() {
                         .join(', ')}
                     </div>
                   </div>
-                )}
+                )} */}
 
                 {currentQuestion.sample_input && (
                   <div>
@@ -405,12 +451,18 @@ export default function Challenge() {
               {execState.loading ? "Executing..." : currentQuestion?.is_locked ? "Correct (Locked)" : "Execute"}
             </button>
 
-            <div className="text-sm text-gray-300">
+            <div className="text-sm text-gray-300 flex gap-6">
               {typeof currentQuestion?.attempts === "number" && (
-                <span className="mr-4">Attempts: <b>{currentQuestion.attempts}</b></span>
+                <span className="mr-2">Attempts: <b>{currentQuestion.attempts}</b>/5</span>
               )}
-              {currentQuestion?.last_result === 1 && <span className="text-green-400"><b>Result: Correct</b></span>}
-              {currentQuestion?.last_result === 0 && <span className="text-red-400"><b>Result: Wrong</b></span>}
+              {execState.resultMessage && (
+                <span className={execState.resultMessage.includes("✅") ? "text-green-400" : "text-red-400"}>
+                  <b>{execState.resultMessage}</b>
+                </span>
+              )}
+              {execState.errorMessage && (
+                <span className="text-orange-400"><b>Error: {execState.errorMessage}</b></span>
+              )}
             </div>
           </div>
 
@@ -420,7 +472,7 @@ export default function Challenge() {
             {/* Prev / Next */}
             <div className="flex gap-3">
               <button
-                disabled={current === 1}
+                disabled={current === 0}
                 onClick={() => setCurrent(c => c - 1)}
                 className="px-4 py-2 rounded-full bg-gray-700
                            disabled:opacity-40 hover:scale-105 transition"
@@ -429,7 +481,7 @@ export default function Challenge() {
               </button>
 
               <button
-                disabled={current === 30}
+                disabled={current === questions.length - 1}
                 onClick={() => setCurrent(c => c + 1)}
                 className="px-4 py-2 rounded-full bg-gray-700
                            disabled:opacity-40 hover:scale-105 transition"
@@ -459,7 +511,7 @@ export default function Challenge() {
           </div>
 
           {/* Submit */}
-          {current === 30 && (
+          {current === questions.length - 1 && (
             <button
               onClick={manualSubmit}
               className="mt-6 bg-purple-600 px-6 py-3 rounded-full

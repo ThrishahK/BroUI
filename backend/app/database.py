@@ -5,6 +5,7 @@ from .config import DATABASE_URL
 
 
 # SQLAlchemy setup
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

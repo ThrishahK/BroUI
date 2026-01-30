@@ -6,8 +6,15 @@ Supports multiple database configurations for different environments
 
 import os
 import sys
+import hashlib
 from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 from decouple import config
+
+# Import models and database setup
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from app.database import Base
+from app.models import Team, Question, ChallengeSession, Submission
 
 def setup_sqlite():
     """Setup SQLite database (default for development)"""
@@ -17,16 +24,23 @@ def setup_sqlite():
     database_url = config("DATABASE_URL", default="sqlite:///./brocode.db")
     
     # Create engine
-    engine = create_engine(database_url, echo=True)
+    engine = create_engine(database_url, echo=False)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     
-    # Test connection
+    # Test connection and create tables
     try:
         with engine.connect() as conn:
             result = conn.execute(text("SELECT sqlite_version()"))
             version = result.fetchone()[0]
             print(f"✅ SQLite connected successfully (Version: {version})")
-            
-            # Check if tables exist
+        
+        # Create all tables
+        print("📦 Creating database tables...")
+        Base.metadata.create_all(bind=engine)
+        print("✅ Tables created successfully")
+        
+        # Check if tables exist
+        with engine.connect() as conn:
             result = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
             tables = result.fetchall()
             table_names = [table[0] for table in tables]
@@ -38,9 +52,52 @@ def setup_sqlite():
             for table in expected_tables:
                 status = "✅" if table in table_names else "❌"
                 print(f"   {status} {table}")
+        
+        # Create test teams if they don't exist
+        print("\n👥 Creating test teams...")
+        db = SessionLocal()
+        try:
+            # Test team 1: TEST123 / testpass
+            team1 = db.query(Team).filter(Team.team_leader_usn == "TEST123").first()
+            if not team1:
+                # Use SHA256 hash for testpass (as per auth.py fallback)
+                password_hash = hashlib.sha256("testpass".encode()).hexdigest()
+                team1 = Team(
+                    team_leader_usn="TEST123",
+                    password=password_hash,
+                    team_name="Test Team"
+                )
+                db.add(team1)
+                print("   ✅ Created team: TEST123 / testpass")
+            else:
+                print("   ℹ️  Team TEST123 already exists")
+            
+            # Test team 2: NNM24AC008 / NNM24AC008
+            team2 = db.query(Team).filter(Team.team_leader_usn == "NNM24AC008").first()
+            if not team2:
+                # Use SHA256 hash for NNM24AC008
+                password_hash = hashlib.sha256("NNM24AC008".encode()).hexdigest()
+                team2 = Team(
+                    team_leader_usn="NNM24AC008",
+                    password=password_hash,
+                    team_name="Team NNM24AC008"
+                )
+                db.add(team2)
+                print("   ✅ Created team: NNM24AC008 / NNM24AC008")
+            else:
+                print("   ℹ️  Team NNM24AC008 already exists")
+            
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(f"   ⚠️  Error creating teams: {e}")
+        finally:
+            db.close()
                 
     except Exception as e:
         print(f"❌ SQLite setup failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
     
     return True

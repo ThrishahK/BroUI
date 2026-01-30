@@ -1,23 +1,40 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
+
 from app.routers import leaderboard
 from app.routers.leaderboard import router as leaderboard_router
 
 
-# Create database tables
+from .config import CORS_ORIGINS, DEBUG
+
+
+# Import all models so they register with Base.metadata
+from .models import Team, Question, ChallengeSession, Submission
+
+# Create database tables (must be after model imports)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="BroCode Backend", version="1.0.0")
 app.include_router(leaderboard_router)
 
 # CORS middleware for frontend integration
+# Clean up origins list (remove empty strings and strip whitespace)
+origins = [origin.strip() for origin in CORS_ORIGINS if origin.strip()]
+
+# Default origins for development if none configured
+if not origins:
+    origins = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
+
+print(f"CORS configured with origins: {origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers
@@ -37,6 +54,11 @@ except ImportError as e:
 @app.get("/")
 async def root():
     return {"message": "Welcome to BroCode Backend API"}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "message": "Backend is running"}
 
 if __name__ == "__main__":
     import uvicorn

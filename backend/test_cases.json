@@ -1,0 +1,762 @@
+{
+    "E01": {
+        "name": "The Vibe Check (Sum)",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "10\n20",
+                "expected": "30"
+            },
+            {
+                "input": "0\n0",
+                "expected": "0"
+            },
+            {
+                "input": "-5\n10",
+                "expected": "5"
+            },
+            {
+                "input": "999\n1",
+                "expected": "1000"
+            },
+            {
+                "input": "-100\n-50",
+                "expected": "-150"
+            }
+        ]
+    },
+    "E02": {
+        "name": "Odd or Even Vibe?",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "7",
+                "expected": "Odd"
+            },
+            {
+                "input": "8",
+                "expected": "Even"
+            },
+            {
+                "input": "0",
+                "expected": "Even"
+            },
+            {
+                "input": "-3",
+                "expected": "Odd"
+            },
+            {
+                "input": "1000",
+                "expected": "Even"
+            }
+        ]
+    },
+    "E03": {
+        "name": "Who is the Biggest Bro?",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "50\n12",
+                "expected": "50"
+            },
+            {
+                "input": "5\n100",
+                "expected": "100"
+            },
+            {
+                "input": "-10\n-5",
+                "expected": "-5"
+            },
+            {
+                "input": "0\n1",
+                "expected": "1"
+            },
+            {
+                "input": "999\n1000",
+                "expected": "1000"
+            }
+        ]
+    },
+    "E04": {
+        "name": "Simple Countdown",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "5",
+                "expected": "5 4 3 2 1"
+            },
+            {
+                "input": "1",
+                "expected": "1"
+            },
+            {
+                "input": "3",
+                "expected": "3 2 1"
+            },
+            {
+                "input": "10",
+                "expected": "10 9 8 7 6 5 4 3 2 1"
+            }
+        ]
+    },
+    "E05": {
+        "name": "Echo Chamber",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "Bro",
+                "expected": "Bro Bro Bro"
+            },
+            {
+                "input": "Hi",
+                "expected": "Hi Hi Hi"
+            },
+            {
+                "input": "X",
+                "expected": "X X X"
+            },
+            {
+                "input": "Code",
+                "expected": "Code Code Code"
+            }
+        ]
+    },
+    "E06": {
+        "name": "Positive Vibes Only",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "-42",
+                "expected": "42"
+            },
+            {
+                "input": "42",
+                "expected": "42"
+            },
+            {
+                "input": "0",
+                "expected": "0"
+            },
+            {
+                "input": "-999",
+                "expected": "999"
+            },
+            {
+                "input": "1",
+                "expected": "1"
+            }
+        ]
+    },
+    "E07": {
+        "name": "String Length",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "BroCode",
+                "expected": "7"
+            },
+            {
+                "input": "Hi",
+                "expected": "2"
+            },
+            {
+                "input": "A",
+                "expected": "1"
+            },
+            {
+                "input": "Hello World",
+                "expected": "11"
+            },
+            {
+                "input": "12345",
+                "expected": "5"
+            }
+        ]
+    },
+    "E08": {
+        "name": "Celsius to Fahrenheit",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "25",
+                "expected": "77"
+            },
+            {
+                "input": "0",
+                "expected": "32"
+            },
+            {
+                "input": "100",
+                "expected": "212"
+            },
+            {
+                "input": "-40",
+                "expected": "-40"
+            },
+            {
+                "input": "37",
+                "expected": "99"
+            }
+        ]
+    },
+    "E09": {
+        "name": "First Character",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "Pizza",
+                "expected": "P"
+            },
+            {
+                "input": "Hello",
+                "expected": "H"
+            },
+            {
+                "input": "abc",
+                "expected": "a"
+            },
+            {
+                "input": "123",
+                "expected": "1"
+            },
+            {
+                "input": "X",
+                "expected": "X"
+            }
+        ]
+    },
+    "E10": {
+        "name": "Cube It",
+        "points": 2,
+        "test_cases": [
+            {
+                "input": "3",
+                "expected": "27"
+            },
+            {
+                "input": "2",
+                "expected": "8"
+            },
+            {
+                "input": "1",
+                "expected": "1"
+            },
+            {
+                "input": "5",
+                "expected": "125"
+            },
+            {
+                "input": "10",
+                "expected": "1000"
+            }
+        ]
+    },
+    "M01": {
+        "name": "Reverse the Hype",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "Hello",
+                "expected": "olleH"
+            },
+            {
+                "input": "abc",
+                "expected": "cba"
+            },
+            {
+                "input": "A",
+                "expected": "A"
+            },
+            {
+                "input": "BroCode",
+                "expected": "edoCor"
+            },
+            {
+                "input": "12345",
+                "expected": "54321"
+            }
+        ]
+    },
+    "M02": {
+        "name": "Factorial Fun",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "5",
+                "expected": "120"
+            },
+            {
+                "input": "0",
+                "expected": "1"
+            },
+            {
+                "input": "1",
+                "expected": "1"
+            },
+            {
+                "input": "6",
+                "expected": "720"
+            },
+            {
+                "input": "10",
+                "expected": "3628800"
+            }
+        ]
+    },
+    "M03": {
+        "name": "FizzBuzz Classic",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "5",
+                "expected": "1 2 Fizz 4 Buzz"
+            },
+            {
+                "input": "15",
+                "expected": "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz"
+            },
+            {
+                "input": "3",
+                "expected": "1 2 Fizz"
+            },
+            {
+                "input": "1",
+                "expected": "1"
+            }
+        ]
+    },
+    "M04": {
+        "name": "Array Max",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "5\n10 20 5 100 2",
+                "expected": "100"
+            },
+            {
+                "input": "3\n1 2 3",
+                "expected": "3"
+            },
+            {
+                "input": "4\n-5 -10 -1 -20",
+                "expected": "-1"
+            },
+            {
+                "input": "1\n42",
+                "expected": "42"
+            },
+            {
+                "input": "5\n5 5 5 5 5",
+                "expected": "5"
+            }
+        ]
+    },
+    "M05": {
+        "name": "Palindrome Checker",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "racecar",
+                "expected": "True"
+            },
+            {
+                "input": "hello",
+                "expected": "False"
+            },
+            {
+                "input": "madam",
+                "expected": "True"
+            },
+            {
+                "input": "a",
+                "expected": "True"
+            },
+            {
+                "input": "ab",
+                "expected": "False"
+            }
+        ]
+    },
+    "M06": {
+        "name": "Sum of Digits",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "123",
+                "expected": "6"
+            },
+            {
+                "input": "999",
+                "expected": "27"
+            },
+            {
+                "input": "100",
+                "expected": "1"
+            },
+            {
+                "input": "5",
+                "expected": "5"
+            },
+            {
+                "input": "12345",
+                "expected": "15"
+            }
+        ]
+    },
+    "M07": {
+        "name": "Count Vowels",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "BroCode",
+                "expected": "3"
+            },
+            {
+                "input": "aeiou",
+                "expected": "5"
+            },
+            {
+                "input": "xyz",
+                "expected": "0"
+            },
+            {
+                "input": "HELLO",
+                "expected": "2"
+            },
+            {
+                "input": "Programming",
+                "expected": "3"
+            }
+        ]
+    },
+    "M08": {
+        "name": "Linear Search",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "5\n4\n10 20 5 30",
+                "expected": "2"
+            },
+            {
+                "input": "100\n3\n1 2 3",
+                "expected": "-1"
+            },
+            {
+                "input": "1\n5\n1 2 3 4 5",
+                "expected": "0"
+            },
+            {
+                "input": "5\n5\n1 2 3 4 5",
+                "expected": "4"
+            },
+            {
+                "input": "3\n3\n3 3 3",
+                "expected": "0"
+            }
+        ]
+    },
+    "M09": {
+        "name": "Power Up",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "2\n3",
+                "expected": "8"
+            },
+            {
+                "input": "5\n2",
+                "expected": "25"
+            },
+            {
+                "input": "10\n0",
+                "expected": "1"
+            },
+            {
+                "input": "2\n10",
+                "expected": "1024"
+            },
+            {
+                "input": "3\n4",
+                "expected": "81"
+            }
+        ]
+    },
+    "M10": {
+        "name": "Remove Duplicates",
+        "points": 3,
+        "test_cases": [
+            {
+                "input": "banana",
+                "expected": "ban"
+            },
+            {
+                "input": "hello",
+                "expected": "helo"
+            },
+            {
+                "input": "abc",
+                "expected": "abc"
+            },
+            {
+                "input": "aaa",
+                "expected": "a"
+            },
+            {
+                "input": "programming",
+                "expected": "progamin"
+            }
+        ]
+    },
+    "H01": {
+        "name": "Prime Time",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "17",
+                "expected": "Prime"
+            },
+            {
+                "input": "4",
+                "expected": "Not Prime"
+            },
+            {
+                "input": "2",
+                "expected": "Prime"
+            },
+            {
+                "input": "1",
+                "expected": "Not Prime"
+            },
+            {
+                "input": "97",
+                "expected": "Prime"
+            },
+            {
+                "input": "100",
+                "expected": "Not Prime"
+            }
+        ]
+    },
+    "H02": {
+        "name": "Fibonacci Nth",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "5",
+                "expected": "3"
+            },
+            {
+                "input": "1",
+                "expected": "0"
+            },
+            {
+                "input": "2",
+                "expected": "1"
+            },
+            {
+                "input": "10",
+                "expected": "34"
+            },
+            {
+                "input": "7",
+                "expected": "8"
+            }
+        ]
+    },
+    "H03": {
+        "name": "Sort It Out",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "4\n3 1 4 2",
+                "expected": "1 2 3 4"
+            },
+            {
+                "input": "5\n5 4 3 2 1",
+                "expected": "1 2 3 4 5"
+            },
+            {
+                "input": "3\n1 2 3",
+                "expected": "1 2 3"
+            },
+            {
+                "input": "1\n42",
+                "expected": "42"
+            },
+            {
+                "input": "5\n10 -5 3 0 7",
+                "expected": "-5 0 3 7 10"
+            }
+        ]
+    },
+    "H04": {
+        "name": "Anagram Check",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "listen\nsilent",
+                "expected": "Yes"
+            },
+            {
+                "input": "hello\nworld",
+                "expected": "No"
+            },
+            {
+                "input": "abc\ncba",
+                "expected": "Yes"
+            },
+            {
+                "input": "rat\ncar",
+                "expected": "No"
+            },
+            {
+                "input": "anagram\nnagaram",
+                "expected": "Yes"
+            }
+        ]
+    },
+    "H05": {
+        "name": "Matrix Diagonal Sum",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "2\n1 2\n3 4",
+                "expected": "5"
+            },
+            {
+                "input": "3\n1 2 3\n4 5 6\n7 8 9",
+                "expected": "15"
+            },
+            {
+                "input": "1\n5",
+                "expected": "5"
+            },
+            {
+                "input": "3\n0 0 0\n0 10 0\n0 0 0",
+                "expected": "10"
+            }
+        ]
+    },
+    "H06": {
+        "name": "Second Largest",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "4\n10 20 40 30",
+                "expected": "30"
+            },
+            {
+                "input": "5\n1 2 3 4 5",
+                "expected": "4"
+            },
+            {
+                "input": "3\n100 50 75",
+                "expected": "75"
+            },
+            {
+                "input": "4\n5 5 5 4",
+                "expected": "4"
+            }
+        ]
+    },
+    "H07": {
+        "name": "Word Count",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "Bro Code is   lit",
+                "expected": "4"
+            },
+            {
+                "input": "Hello World",
+                "expected": "2"
+            },
+            {
+                "input": "OneWord",
+                "expected": "1"
+            },
+            {
+                "input": "a b c d e",
+                "expected": "5"
+            },
+            {
+                "input": "  spaces  everywhere  ",
+                "expected": "2"
+            }
+        ]
+    },
+    "H08": {
+        "name": "Pattern Printing",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "3",
+                "expected": "*\n**\n***"
+            },
+            {
+                "input": "1",
+                "expected": "*"
+            },
+            {
+                "input": "5",
+                "expected": "*\n**\n***\n****\n*****"
+            },
+            {
+                "input": "2",
+                "expected": "*\n**"
+            }
+        ]
+    },
+    "H09": {
+        "name": "Missing Number",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "3\n3 0 1",
+                "expected": "2"
+            },
+            {
+                "input": "4\n0 1 3 4",
+                "expected": "2"
+            },
+            {
+                "input": "2\n1 2",
+                "expected": "0"
+            },
+            {
+                "input": "5\n5 4 2 1 0",
+                "expected": "3"
+            }
+        ]
+    },
+    "H10": {
+        "name": "Bracket Balancer",
+        "points": 5,
+        "test_cases": [
+            {
+                "input": "(())()",
+                "expected": "Balanced"
+            },
+            {
+                "input": "(()",
+                "expected": "Unbalanced"
+            },
+            {
+                "input": "()",
+                "expected": "Balanced"
+            },
+            {
+                "input": ")(",
+                "expected": "Unbalanced"
+            },
+            {
+                "input": "(((())))",
+                "expected": "Balanced"
+            },
+            {
+                "input": "((())",
+                "expected": "Unbalanced"
+            }
+        ]
+    }
+}
