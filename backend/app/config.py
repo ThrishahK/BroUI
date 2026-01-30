@@ -2,8 +2,8 @@ from decouple import config
 import os
 
 # Database configuration
-DATABASE_URL = config("DATABASE_URL", default="sqlite:///./brocode.db")
 
+DATABASE_URL = config("DATABASE_URL", default="sqlite:///./brocode.db")
 # JWT configuration
 SECRET_KEY = config("SECRET_KEY", default="your-secret-key-here")
 ALGORITHM = config("ALGORITHM", default="HS256")

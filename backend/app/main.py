@@ -1,7 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
+
+from app.routers import leaderboard
+from app.routers.leaderboard import router as leaderboard_router
+
+
 from .config import CORS_ORIGINS, DEBUG
+
 
 # Import all models so they register with Base.metadata
 from .models import Team, Question, ChallengeSession, Submission
@@ -10,6 +16,7 @@ from .models import Team, Question, ChallengeSession, Submission
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="BroCode Backend", version="1.0.0")
+app.include_router(leaderboard_router)
 
 # CORS middleware for frontend integration
 # Clean up origins list (remove empty strings and strip whitespace)
@@ -38,7 +45,7 @@ try:
     app.include_router(challenge.router, prefix="/api/challenge", tags=["Challenge"])
     app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
     app.include_router(admin_auth.router, prefix="/api/admin/auth", tags=["Admin Auth"])
-    app.include_router(leaderboard.router, prefix="/api/leaderboard", tags=["Leaderboard"])
+    app.include_router(leaderboard.router)
     print("Routers registered successfully")
 except ImportError as e:
     print(f"Warning: Could not import routers: {e}")
