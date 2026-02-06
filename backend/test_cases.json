@@ -269,7 +269,7 @@
             },
             {
                 "input": "BroCode",
-                "expected": "edoCor"
+                "expected": "edoCorB"
             },
             {
                 "input": "12345",
