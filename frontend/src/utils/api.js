@@ -1,6 +1,25 @@
 // API utility functions for BroCode Challenge Platform
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+// Dynamic API base URL for LAN access
+const getApiBaseUrl = () => {
+  // Check if custom URL is set via environment
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // For LAN access: use the same hostname/IP as the frontend
+  const currentHost = window.location.hostname;
+
+  // If accessing via IP address or non-localhost domain, use same host for backend
+  if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+    return `http://${currentHost}:8000/api`;
+  }
+
+  // Default to localhost for local development
+  return 'http://localhost:8000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {

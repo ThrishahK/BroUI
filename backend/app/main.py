@@ -19,19 +19,66 @@ app = FastAPI(title="BroCode Backend", version="1.0.0")
 app.include_router(leaderboard_router)
 
 # CORS middleware for frontend integration
-# Clean up origins list (remove empty strings and strip whitespace)
-origins = [origin.strip() for origin in CORS_ORIGINS if origin.strip()]
+import socket
+import ipaddress
 
-# Default origins for development if none configured
-if not origins:
-    origins = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
+def get_network_ips():
+    """Get all network IP addresses of this machine"""
+    ips = []
+    try:
+        # Get all network interfaces
+        hostname = socket.gethostname()
+        for ip in socket.getaddrinfo(hostname, None):
+            ip_addr = ip[4][0]
+            if not ip_addr.startswith('127.') and ':' not in ip_addr:  # IPv4 only, not localhost
+                ips.append(ip_addr)
+    except:
+        pass
 
-print(f"CORS configured with origins: {origins}")
+    # Also try common methods
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        if local_ip not in ips and not local_ip.startswith('127.'):
+            ips.append(local_ip)
+        s.close()
+    except:
+        pass
+
+    return list(set(ips))  # Remove duplicates
+
+if DEBUG:
+    # For LAN testing - allow localhost + detected network IPs
+    origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+    # Add detected network IPs
+    network_ips = get_network_ips()
+    for ip in network_ips:
+        origins.extend([
+            f"http://{ip}:5173",
+            f"http://{ip}:3000",
+        ])
+
+    allow_credentials = True  # Now we can use credentials with specific origins
+    print(f"CORS configured for LAN testing: allowing origins {origins}")
+else:
+    # Production configuration
+    origins = [origin.strip() for origin in CORS_ORIGINS if origin.strip()]
+    if not origins:
+        origins = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
+    allow_credentials = True
+    print(f"CORS configured with origins: {origins}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_credentials=allow_credentials,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],

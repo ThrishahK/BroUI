@@ -1,0 +1,193 @@
+BROCODE CHALLENGE PLATFORM - QUICK START GUIDE
+=============================================
+
+This guide shows you how to run all components of the BroCode Challenge Platform.
+
+================================================================================
+1) FRONTEND - React + Vite Application
+================================================================================
+
+Prerequisites:
+- Node.js 18+ installed
+- npm or bun package manager
+
+Setup and Run:
+```
+cd frontend
+bun install          # or npm install
+bun run dev          # or npm run dev
+```
+
+Frontend will be available at:
+- Local: http://localhost:5173
+- Network: http://YOUR_IP_ADDRESS:5173 (accessible from other devices on LAN)
+
+================================================================================
+2) BACKEND - FastAPI Server
+================================================================================
+
+Prerequisites:
+- Python 3.10+ installed
+- Virtual environment created
+
+Setup:
+```
+cd backend
+python3 -m venv venv
+source venv/bin/activate    # Linux/Mac
+# venv\Scripts\activate     # Windows
+pip install -r requirements.txt
+```
+
+================================================================================
+3) DATABASE - SQLite (Default) or PostgreSQL
+================================================================================
+
+For SQLite (Recommended for development):
+```
+cd backend
+source venv/bin/activate
+python switch_database.py sqlite
+python setup_database.py
+```
+
+For PostgreSQL (Production):
+```
+# Install PostgreSQL first
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# Create database and user
+sudo -u postgres psql
+CREATE DATABASE brocode_db;
+CREATE USER brocode_user WITH ENCRYPTED PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE brocode_db TO brocode_user;
+\q
+
+# Update .env file
+DATABASE_URL=postgresql://brocode_user:your_password@localhost:5432/brocode_db
+
+# Install PostgreSQL driver
+pip install psycopg2-binary
+
+# Setup database
+python setup_database.py
+```
+
+================================================================================
+4) API SERVICE - FastAPI Server
+================================================================================
+
+After backend and database are set up:
+
+Option A - Production Server (Recommended):
+```
+cd backend
+source venv/bin/activate
+python server.py
+```
+
+Option B - Development Server (Auto-reload):
+```
+cd backend
+source venv/bin/activate
+python run.py
+```
+
+API Service will be available at:
+- http://localhost:8000
+- API Docs: http://localhost:8000/docs
+- Alternative Docs: http://localhost:8000/redoc
+
+================================================================================
+COMPLETE SETUP SEQUENCE
+================================================================================
+
+1. Setup Database:
+   cd backend && source venv/bin/activate
+   python switch_database.py sqlite
+   python setup_database.py
+
+2. Start API Service:
+   python server.py
+   # Service runs at http://localhost:8000
+
+3. Find your network IP (for LAN access):
+   ./get_ip.sh
+   # Note down your IP address for sharing
+
+4. Setup Frontend (in new terminal):
+   cd frontend
+   bun install
+   bun run dev
+   # Frontend runs at http://localhost:5173 AND http://YOUR_IP:5173 (network access)
+
+================================================================================
+FINDING YOUR IP ADDRESS (For LAN Access)
+================================================================================
+
+# Quick way - run the helper script:
+./get_ip.sh
+
+# Or find manually:
+ifconfig | grep -E "inet (192\.|10\.|172\.)" | awk '{print $2}'
+# or
+ip addr show | grep -E "inet (192\.|10\.|172\.)" | awk '{print $2}' | head -1
+
+# Example output: 192.168.1.100
+# Then access from other devices: http://192.168.1.100:5173
+
+================================================================================
+TESTING THE SETUP
+================================================================================
+
+Test Database (Local):
+curl http://localhost:8000/api/questions/public/all
+
+Test API Service (Local):
+curl http://localhost:8000/docs
+
+Test Frontend (Local):
+Open http://localhost:5173 in browser
+
+Test Frontend (Network):
+Open http://YOUR_IP_ADDRESS:5173 in browser from another device
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Port conflicts:
+- Kill process on port 8000: lsof -ti:8000 | xargs kill -9
+- Kill process on port 5173: lsof -ti:5173 | xargs kill -9
+
+Network/Firewall issues:
+- Ensure ports 5173 (frontend) and 8000 (backend) are not blocked by firewall
+- Check if your network allows internal connections
+- Try disabling firewall temporarily: sudo ufw disable
+
+Database issues:
+- Run: python setup_database.py
+
+Permission issues:
+- Ensure virtual environment is activated
+- Check file permissions
+
+LAN Access issues:
+- Verify you're using the correct IP address (not 127.0.0.1)
+- Make sure other devices are on the same network
+- Check if VPN or proxy is interfering
+
+================================================================================
+PRODUCTION NOTES
+================================================================================
+
+For production deployment:
+- Use PostgreSQL instead of SQLite
+- Set DEBUG=False in environment
+- Configure proper CORS settings
+- Use a reverse proxy (nginx)
+- Set up SSL certificates
+- Configure proper logging
+
+================================================================================
