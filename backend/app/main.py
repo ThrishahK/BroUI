@@ -49,7 +49,8 @@ try:
     app.include_router(challenge.router, prefix="/api/challenge", tags=["Challenge"])
     app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
     app.include_router(admin_auth.router, prefix="/api/admin/auth", tags=["Admin Auth"])
-    app.include_router(leaderboard.router)
+    app.include_router(leaderboard.router, prefix="/api/leaderboard", tags=["Leaderboard"])
+    # app.include_router(leaderboard.router)
     print("Routers registered successfully")
 except ImportError as e:
     print(f"Warning: Could not import routers: {e}")

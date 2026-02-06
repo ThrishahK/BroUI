@@ -1,6 +1,5 @@
-'''from typing import List, Optional
-
-from fastapi import APIRouter, Depends
+from typing import List, Optional
+from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -11,15 +10,20 @@ from ..models.question import Question
 
 router = APIRouter(prefix="/api/leaderboard", tags=["Leaderboard"])
 
-
-
 @router.get("/", response_model=List[dict])
-async def get_leaderboard(db: Session = Depends(get_db)):
+def get_leaderboard(request: Request, db: Session = Depends(get_db)):
     """
     Simple leaderboard:
     - Uses the latest challenge session per team (highest session id).
     - Score = sum(question.points) for correct submissions in that session.
     """
+    # Security Check: Only allow requests from the server machine (localhost)
+    if request.client.host not in ("127.0.0.1", "localhost", "::1"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Access Denied: The leaderboard is only viewable from the server laptop."
+        )
+
     teams = db.query(Team).filter(Team.is_active == True).all()
     if not teams:
         return []
@@ -76,30 +80,3 @@ async def get_leaderboard(db: Session = Depends(get_db)):
         row["rank"] = idx
 
     return leaderboard_rows
-
-'''
-
-
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-
-from ..database import get_db
-
-router = APIRouter(prefix="/api/leaderboard", tags=["Leaderboard"])
-
-
-@router.get("/")
-def get_leaderboard(db: Session = Depends(get_db)):
-    result = db.execute(text("""
-        SELECT
-            ROW_NUMBER() OVER (ORDER BY score DESC) AS rank,
-            team_name,
-            usn AS team_leader_usn,
-            solved,
-            score
-        FROM leaderboard
-        ORDER BY score DESC
-    """))
-
-    return [dict(row._mapping) for row in result]

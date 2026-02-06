@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -52,18 +52,51 @@ def create_submissions_for_session(session_id: int, db: Session):
 
     db.commit()
 
+from fastapi.security import OAuth2PasswordBearer
+from ..routers.auth import get_current_team, oauth2_scheme
+
+# Optional scheme for DEBUG mode fallback
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
 def get_current_team_or_test_team():
-    """Get current team or create a test team for LAN testing."""
-    if DEBUG:
-        # In DEBUG mode, create/use a test team without authentication
-        def test_dependency(db: Session = Depends(get_db)):
-            # Try to find existing test team
+    """
+    Get current team with smart fallback for DEBUG/LAN mode.
+    
+    Logic:
+    1. If a valid token is provided, return the authenticated team (Session Isolation).
+    2. If NO token is provided AND DEBUG=True, fall back to "Test Team" and print a warning.
+    """
+    async def smart_dependency(
+        token: Optional[str] = Depends(oauth2_scheme_optional),
+        db: Session = Depends(get_db)
+    ):
+        # 1. Try to authenticate with the token if provided
+        if token:
+            try:
+                # Reuse the logic from auth.get_current_team manually to avoid strict dependency injection of the original which might auto-error
+                from ..routers.auth import SECRET_KEY, ALGORITHM, TokenData 
+                from jose import jwt, JWTError
+                
+                payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+                team_leader_usn: str = payload.get("sub")
+                if team_leader_usn:
+                    team = db.query(Team).filter(Team.team_leader_usn == team_leader_usn).first()
+                    if team:
+                        return team
+            except Exception:
+                # Token invalid/expired - fall through to debug check
+                pass
+
+        # 2. Fallback for DEBUG mode
+        if DEBUG:
+            print("\n[WARNING] Using Fallback 'Test Team' (No valid token provided)")
+            
+            # Create/Get Test Team
             test_team = db.query(Team).filter(Team.team_leader_usn == "TEST123").first()
             if not test_team:
-                # Create test team if it doesn't exist
                 test_team = Team(
                     team_leader_usn="TEST123",
-                    password_hash="testpass",  # Plain text for testing
+                    password_hash="testpass",
                     team_name="Test Team",
                     score=0
                 )
@@ -71,9 +104,15 @@ def get_current_team_or_test_team():
                 db.commit()
                 db.refresh(test_team)
             return test_team
-        return test_dependency
-    else:
-        return get_current_team
+
+        # 3. No token and not in DEBUG mode -> Error
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return smart_dependency
 
 @router.post("/start", response_model=ChallengeStartResponse)
 async def start_challenge(
@@ -213,7 +252,15 @@ async def execute_submission(
     if not submission:
         raise HTTPException(status_code=404, detail="Submission record not found")
 
-   
+    
+    # Check max attempts
+    MAX_ATTEMPTS = 5
+    if (submission.attempts or 0) >= MAX_ATTEMPTS:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Max execution attempts ({MAX_ATTEMPTS}) reached for this question."
+        )
+
     if submission.is_locked:
         return {
             "question_id": question_id,

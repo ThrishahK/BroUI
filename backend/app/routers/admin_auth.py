@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status,Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 import bcrypt
@@ -38,10 +38,16 @@ def create_admin_access_token(data: dict, expires_delta: Optional[timedelta] = N
     return encoded_jwt
 
 async def get_current_admin(
+    request: Request, # Add this parameter
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ) -> Admin:
     """Dependency to get current authenticated admin."""
+    if request.client.host not in ("127.0.0.1", "localhost", "::1"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin actions are restricted to the server laptop."
+        )
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate admin credentials",
