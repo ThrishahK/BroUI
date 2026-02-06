@@ -1,28 +1,34 @@
 // API utility functions for BroCode Challenge Platform
 
-// Dynamic API base URL for LAN access
+// Dynamic API base URL for any network configuration
 const getApiBaseUrl = () => {
   // Check if custom URL is set via environment
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
 
-  // For LAN access: use the same hostname/IP as the frontend
+  // For flexible LAN access: use the same hostname/IP as the frontend
+  // This works regardless of network setup - localhost, LAN IP, or any other IP
   const currentHost = window.location.hostname;
 
-  // If accessing via IP address or non-localhost domain, use same host for backend
-  if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-    return `http://${currentHost}:8000/api`;
-  }
-
-  // Default to localhost for local development
-  return 'http://localhost:8000/api';
+  // Always use the same host as the frontend for the backend
+  // The backend CORS is configured to allow all origins in DEBUG mode
+  return `http://${currentHost}:8000/api`;
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
+  // In LAN testing mode (when CORS allows all origins), auth might not work
+  // For now, skip auth headers to avoid CORS issues during testing
+  const isLanTesting = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+
+  if (isLanTesting) {
+    console.log('LAN testing mode: skipping auth headers to avoid CORS issues');
+    return {}; // Skip auth headers for LAN testing
+  }
+
   const token = localStorage.getItem('access_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };

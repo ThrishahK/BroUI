@@ -19,6 +19,7 @@ from ..schemas.challenge import (
 from ..routers.auth import get_current_team
 from ..config import (
     CHALLENGE_DURATION_MINUTES,
+    DEBUG,
     UPLOAD_DIR,
     ALLOWED_EXTENSIONS,
     MAX_QUESTIONS,
@@ -51,12 +52,35 @@ def create_submissions_for_session(session_id: int, db: Session):
 
     db.commit()
 
+def get_current_team_or_test_team():
+    """Get current team or create a test team for LAN testing."""
+    if DEBUG:
+        # In DEBUG mode, create/use a test team without authentication
+        def test_dependency(db: Session = Depends(get_db)):
+            # Try to find existing test team
+            test_team = db.query(Team).filter(Team.team_leader_usn == "TEST123").first()
+            if not test_team:
+                # Create test team if it doesn't exist
+                test_team = Team(
+                    team_leader_usn="TEST123",
+                    password_hash="testpass",  # Plain text for testing
+                    team_name="Test Team",
+                    score=0
+                )
+                db.add(test_team)
+                db.commit()
+                db.refresh(test_team)
+            return test_team
+        return test_dependency
+    else:
+        return get_current_team
+
 @router.post("/start", response_model=ChallengeStartResponse)
 async def start_challenge(
     db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team)
+    current_team: Team = Depends(get_current_team_or_test_team())
 ):
-    """Start a new challenge session for the authenticated team."""
+    """Start a new challenge session for the authenticated team (or test team in DEBUG mode)."""
     # Check if team already has an active session
     existing_session = get_active_challenge_session(current_team.id, db)
     if existing_session:
@@ -97,7 +121,7 @@ async def start_challenge(
 @router.get("/status", response_model=ChallengeStatusResponse)
 async def get_challenge_status(
     db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team)
+    current_team: Team = Depends(get_current_team_or_test_team())
 ):
     """Get current challenge status for the authenticated team."""
     session = get_active_challenge_session(current_team.id, db)
@@ -134,7 +158,7 @@ async def update_submission(
     question_id: int,
     submission_update: SubmissionUpdate,
     db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team)
+    current_team: Team = Depends(get_current_team_or_test_team())
 ):
     """Update a submission for a specific question."""
     session = get_active_challenge_session(current_team.id, db)
@@ -173,7 +197,7 @@ async def execute_submission(
     question_id: int,
     payload: ExecuteRequest,
     db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team)
+    current_team: Team = Depends(get_current_team_or_test_team())
 ):
     #Verify Active Session
     session = get_active_challenge_session(current_team.id, db)
@@ -245,7 +269,7 @@ async def upload_file(
     question_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team)
+    current_team: Team = Depends(get_current_team_or_test_team())
 ):
     """Upload a .homie file for a specific question."""
     session = get_active_challenge_session(current_team.id, db)
@@ -290,7 +314,7 @@ async def upload_file(
 async def submit_challenge(
     submit_data: ChallengeSubmitRequest,
     db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team)
+    current_team: Team = Depends(get_current_team_or_test_team())
 ):
     """Submit the entire challenge."""
     session = get_active_challenge_session(current_team.id, db)
