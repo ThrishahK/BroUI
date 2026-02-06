@@ -228,19 +228,24 @@ async def execute_submission(
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
     
-    # CALL THE STANDALONE RUNNER API with the actual question_id
-    async with httpx.AsyncClient() as client:
+    # For LAN testing, use the test_runner directly instead of external judge service
+    if DEBUG:
+        # Use the test_runner module directly
         try:
-            response = await client.post(
-                "http://localhost:8001/run", 
-                json={"question_id": question.question_id, "code": payload.code_answer},
-                timeout=10.0 # Give it time to run the tests
-            )
-            judgement = response.json()
+            from test_runner import test_submission
+            result = test_submission(question.question_id, payload.code_answer)
+            is_correct = (result["status"] == "PASS")
         except Exception as e:
-            raise HTTPException(status_code=500, detail="Execution Service Down")
-
-    is_correct = (judgement["status"] == "PASS")
+            print(f"Test runner error: {e}")
+            raise HTTPException(status_code=500, detail=f"Execution failed: {str(e)}")
+    else:
+        # Use external judge service for production
+        try:
+            from ..services.judge_service import judge_service
+            result = await judge_service.judge_submission(question.question_id, payload.code_answer)
+            is_correct = (result == 1)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Judge service error: {str(e)}")
 
     #Update Database
     submission.code_answer = payload.code_answer
