@@ -28,6 +28,9 @@ export default function Challenge() {
   // Initialize challenge on component mount
   useEffect(() => {
     const initializeChallenge = async () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:initializeChallenge',message:'Challenge init start',data:{},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C1'})}).catch(()=>{});
+      // #endregion
       try {
         setIsLoading(true);
         setError("");
@@ -37,12 +40,18 @@ export default function Challenge() {
         try {
           sessionData = await challengeAPI.startChallenge();
           setSession(sessionData.session);
+          // #region agent log
+          fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:startChallenge',message:'Challenge started',data:{hasSession:!!sessionData?.session},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C1'})}).catch(()=>{});
+          // #endregion
         } catch (err) {
           // If session already exists, just get the status instead
           if (err.message.includes("already has an active")) {
             console.log("Session already exists, loading status...");
             const statusData = await challengeAPI.getChallengeStatus();
             setSession(statusData.session);
+            // #region agent log
+            fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:getChallengeStatus',message:'Existing session loaded',data:{hasSession:!!statusData?.session},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C1'})}).catch(()=>{});
+            // #endregion
           } else {
             throw err;
           }
@@ -51,6 +60,9 @@ export default function Challenge() {
         // Step 2: Fetch all active questions from backend
         const apiQuestions = await questionsAPI.getPublicQuestions();
         console.log("Fetched questions:", apiQuestions);
+        // #region agent log
+        fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:getPublicQuestions',message:'Questions loaded',data:{count:apiQuestions?.length||0},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C1'})}).catch(()=>{});
+        // #endregion
 
         if (!apiQuestions || apiQuestions.length === 0) {
           throw new Error("No questions available from backend");
@@ -109,6 +121,9 @@ export default function Challenge() {
           })
         );
       } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:initializeChallenge',message:'Challenge init failed',data:{errorMessage:error?.message||String(error)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C1'})}).catch(()=>{});
+        // #endregion
         console.error("Failed to initialize challenge:", error);
         setError(error.message || "Failed to start challenge. Please try logging in again.");
         navigate("/login");
@@ -182,9 +197,15 @@ export default function Challenge() {
     try {
       setExecuteStatus((prev) => ({ ...prev, [q.id]: { loading: true } }));
       console.log(`Executing question ${q.id} with code:`, q.answer);
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:executeCurrent',message:'Execute submission',data:{questionId:q.id,question_id:q.question_id},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C2'})}).catch(()=>{});
+      // #endregion
 
       const res = await challengeAPI.executeSubmission(q.id, q.answer);
       console.log("Execution result:", res);
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:executeCurrent',message:'Execute result',data:{questionId:q.id,is_correct:res?.is_correct,attempts:res?.attempts},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C2'})}).catch(()=>{});
+      // #endregion
 
       // Update the question with the result
       setQuestions((prev) =>
@@ -212,6 +233,9 @@ export default function Challenge() {
         },
       }));
     } catch (e) {
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:executeCurrent',message:'Execute failed',data:{questionId:q?.id,errorMessage:e?.message||String(e)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C2'})}).catch(()=>{});
+      // #endregion
       console.error("Execute failed:", e);
       setExecuteStatus((prev) => ({ 
         ...prev, 
@@ -253,14 +277,23 @@ export default function Challenge() {
           }));
 
         console.log("Submitting challenge with submissions:", submissions);
+        // #region agent log
+        fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:manualSubmit',message:'Submit challenge',data:{submissionCount:submissions?.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C3'})}).catch(()=>{});
+        // #endregion
 
         // Submit challenge
         const response = await challengeAPI.submitChallenge(submissions);
         console.log("Submission response:", response);
+        // #region agent log
+        fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:manualSubmit',message:'Submit success',data:{responseKeys:response?Object.keys(response):[]},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C3'})}).catch(()=>{});
+        // #endregion
 
         // Navigate to result page with stats
         navigate("/result", { state: response });
       } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:manualSubmit',message:'Submit failed',data:{errorMessage:error?.message||String(error)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C3'})}).catch(()=>{});
+        // #endregion
         console.error("Failed to submit challenge:", error);
         alert("Failed to submit challenge: " + error.message);
       }

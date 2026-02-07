@@ -13,6 +13,10 @@ export default function Login() {
     const cleanedUSN = usn.trim().toUpperCase();
     const cleanedPassword = password.trim();
 
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.jsx:handleLogin',message:'Login attempt',data:{hasUsn:!!cleanedUSN,hasPassword:!!cleanedPassword},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'L1'})}).catch(()=>{});
+    // #endregion
+
     if (!cleanedUSN || !cleanedPassword) {
       setError("Both Team Leader USN and Password are required.");
       return;
@@ -24,12 +28,19 @@ export default function Login() {
     try {
       await authAPI.login(cleanedUSN, cleanedPassword);
 
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.jsx:handleLogin',message:'Login success',data:{usn:cleanedUSN},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'L1'})}).catch(()=>{});
+      // #endregion
+
       // Store team info for later use
       localStorage.setItem("team_leader_usn", cleanedUSN);
 
       // Navigate to docs page
       navigate("/docs");
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.jsx:handleLogin',message:'Login failed',data:{errorMessage:error?.message||String(error)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'L1'})}).catch(()=>{});
+      // #endregion
       console.error("Login failed:", error);
       setError(error.message || "Login failed. Please check your credentials.");
     } finally {

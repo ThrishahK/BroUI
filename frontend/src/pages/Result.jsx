@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Result() {
@@ -5,6 +6,12 @@ export default function Result() {
   const { state } = useLocation();
 
   const { saved = 0, flagged = 0, unattempted = 0 } = state || {};
+
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Result.jsx:mount',message:'Result page mounted',data:{stateKeys:state?Object.keys(state):[],saved,flagged,unattempted},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'R1'})}).catch(()=>{});
+  }, [state, saved, flagged, unattempted]);
+  // #endregion
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white flex items-center justify-center">

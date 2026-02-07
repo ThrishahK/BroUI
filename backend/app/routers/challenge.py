@@ -58,68 +58,62 @@ from ..routers.auth import get_current_team, oauth2_scheme
 # Optional scheme for DEBUG mode fallback
 oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 
-def get_current_team_or_test_team():
+def get_current_team_for_challenge(db: Session, token: Optional[str] = None):
     """
-    Get current team with smart fallback for DEBUG/LAN mode.
-    
-    Logic:
-    1. If a valid token is provided, return the authenticated team (Session Isolation).
-    2. If NO token is provided AND DEBUG=True, fall back to "Test Team" and print a warning.
+    Get current team for challenge endpoints, with DEBUG fallback.
+
+    This function takes the database session as a parameter to avoid
+    creating multiple sessions and transaction issues.
     """
-    async def smart_dependency(
-        token: Optional[str] = Depends(oauth2_scheme_optional),
-        db: Session = Depends(get_db)
-    ):
-        # 1. Try to authenticate with the token if provided
-        if token:
-            try:
-                # Reuse the logic from auth.get_current_team manually to avoid strict dependency injection of the original which might auto-error
-                from ..routers.auth import SECRET_KEY, ALGORITHM, TokenData 
-                from jose import jwt, JWTError
-                
-                payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-                team_leader_usn: str = payload.get("sub")
-                if team_leader_usn:
-                    team = db.query(Team).filter(Team.team_leader_usn == team_leader_usn).first()
-                    if team:
-                        return team
-            except Exception:
-                # Token invalid/expired - fall through to debug check
-                pass
+    # 1. Try to authenticate with the token if provided
+    if token:
+        try:
+            from ..routers.auth import SECRET_KEY, ALGORITHM
+            from jose import jwt
 
-        # 2. Fallback for DEBUG mode
-        if DEBUG:
-            print("\n[WARNING] Using Fallback 'Test Team' (No valid token provided)")
-            
-            # Create/Get Test Team
-            test_team = db.query(Team).filter(Team.team_leader_usn == "TEST123").first()
-            if not test_team:
-                test_team = Team(
-                    team_leader_usn="TEST123",
-                    password_hash="testpass",
-                    team_name="Test Team",
-                    score=0
-                )
-                db.add(test_team)
-                db.commit()
-                db.refresh(test_team)
-            return test_team
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            team_leader_usn: str = payload.get("sub")
+            if team_leader_usn:
+                team = db.query(Team).filter(Team.team_leader_usn == team_leader_usn).first()
+                if team:
+                    return team
+        except Exception:
+            # Token invalid/expired - fall through to debug check
+            pass
 
-        # 3. No token and not in DEBUG mode -> Error
-        raise HTTPException(
-            status_code=401,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    # 2. Fallback for DEBUG mode
+    if DEBUG:
+        print("\n[DEBUG] Using Fallback 'Test Team' for challenge endpoint")
 
-    return smart_dependency
+        # Create/Get Test Team
+        test_team = db.query(Team).filter(Team.team_leader_usn == "TEST123").first()
+        if not test_team:
+            test_team = Team(
+                team_leader_usn="TEST123",
+                password_hash="testpass",
+                team_name="Test Team",
+                score=0
+            )
+            db.add(test_team)
+            db.commit()
+            db.refresh(test_team)
+        return test_team
+
+    # 3. No token and not in DEBUG mode -> Error
+    raise HTTPException(
+        status_code=401,
+        detail="Not authenticated",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 @router.post("/start", response_model=ChallengeStartResponse)
 async def start_challenge(
-    db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team_or_test_team())
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
 ):
     """Start a new challenge session for the authenticated team (or test team in DEBUG mode)."""
+    current_team = get_current_team_for_challenge(db, token)
+
     # Check if team already has an active session
     existing_session = get_active_challenge_session(current_team.id, db)
     if existing_session:
@@ -159,10 +153,11 @@ async def start_challenge(
 
 @router.get("/status", response_model=ChallengeStatusResponse)
 async def get_challenge_status(
-    db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team_or_test_team())
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
 ):
     """Get current challenge status for the authenticated team."""
+    current_team = get_current_team_for_challenge(db, token)
     session = get_active_challenge_session(current_team.id, db)
     if not session:
         raise HTTPException(
@@ -196,10 +191,11 @@ async def get_challenge_status(
 async def update_submission(
     question_id: int,
     submission_update: SubmissionUpdate,
-    db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team_or_test_team())
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
 ):
     """Update a submission for a specific question."""
+    current_team = get_current_team_for_challenge(db, token)
     session = get_active_challenge_session(current_team.id, db)
     if not session:
         raise HTTPException(
@@ -235,10 +231,11 @@ async def update_submission(
 async def execute_submission(
     question_id: int,
     payload: ExecuteRequest,
-    db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team_or_test_team())
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
 ):
     #Verify Active Session
+    current_team = get_current_team_for_challenge(db, token)
     session = get_active_challenge_session(current_team.id, db)
     if not session:
         raise HTTPException(status_code=404, detail="No active challenge session found")
@@ -320,10 +317,11 @@ async def execute_submission(
 async def upload_file(
     question_id: int,
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team_or_test_team())
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
 ):
     """Upload a .homie file for a specific question."""
+    current_team = get_current_team_for_challenge(db, token)
     session = get_active_challenge_session(current_team.id, db)
     if not session:
         raise HTTPException(
@@ -365,10 +363,11 @@ async def upload_file(
 @router.post("/submit", response_model=ChallengeSubmitResponse)
 async def submit_challenge(
     submit_data: ChallengeSubmitRequest,
-    db: Session = Depends(get_db),
-    current_team: Team = Depends(get_current_team_or_test_team())
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
 ):
     """Submit the entire challenge."""
+    current_team = get_current_team_for_challenge(db, token)
     session = get_active_challenge_session(current_team.id, db)
     if not session:
         raise HTTPException(
