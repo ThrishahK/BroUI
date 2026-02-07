@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..config import DEBUG
 from ..models.team import Team
 from ..models.challenge_session import ChallengeSession
 from ..models.submission import Submission
@@ -10,6 +11,7 @@ from ..models.question import Question
 
 router = APIRouter(prefix="/api/leaderboard", tags=["Leaderboard"])
 
+@router.get("", response_model=List[dict])
 @router.get("/", response_model=List[dict])
 def get_leaderboard(request: Request, db: Session = Depends(get_db)):
     """
@@ -17,11 +19,11 @@ def get_leaderboard(request: Request, db: Session = Depends(get_db)):
     - Uses the latest challenge session per team (highest session id).
     - Score = sum(question.points) for correct submissions in that session.
     """
-    # Security Check: Only allow requests from the server machine (localhost)
-    if request.client.host not in ("127.0.0.1", "localhost", "::1"):
+    # In production, restrict to server machine only; in DEBUG (LAN) allow all
+    if not DEBUG and request.client.host not in ("127.0.0.1", "localhost", "::1"):
         raise HTTPException(
-            status_code=403, 
-            detail="Access Denied: The leaderboard is only viewable from the server laptop."
+            status_code=403,
+            detail="Access Denied: The leaderboard is only viewable from the server laptop.",
         )
 
     teams = db.query(Team).filter(Team.is_active == True).all()

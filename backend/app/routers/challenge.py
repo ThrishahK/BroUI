@@ -38,6 +38,14 @@ def get_active_challenge_session(team_id: int, db: Session) -> ChallengeSession:
         ChallengeSession.is_active == True
     ).first()
 
+
+def team_has_completed_session(team_id: int, db: Session) -> bool:
+    """True if team has any ended (submitted) session — they cannot attempt again."""
+    return db.query(ChallengeSession).filter(
+        ChallengeSession.team_id == team_id,
+        ChallengeSession.is_active == False
+    ).first() is not None
+
 def create_submissions_for_session(session_id: int, db: Session):
     """Create submission records for all questions in a session."""
     questions = db.query(Question).filter(Question.is_active == True).limit(MAX_QUESTIONS).all()
@@ -113,6 +121,13 @@ async def start_challenge(
 ):
     """Start a new challenge session for the authenticated team (or test team in DEBUG mode)."""
     current_team = get_current_team_for_challenge(db, token)
+
+    # Once a team has completed (submitted), they cannot start again
+    if team_has_completed_session(current_team.id, db):
+        raise HTTPException(
+            status_code=403,
+            detail="You have already completed the challenge. You cannot attempt again."
+        )
 
     # Check if team already has an active session
     existing_session = get_active_challenge_session(current_team.id, db)
@@ -384,6 +399,7 @@ async def submit_challenge(
 
         if submission:
             update_data = submission_update.model_dump(exclude_unset=True)
+            update_data.pop("question_id", None)  # used only for lookup, do not overwrite FK
             for field, value in update_data.items():
                 if field == "status":
                     submission.status = SubmissionStatus(value)

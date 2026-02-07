@@ -5,12 +5,16 @@ export default function Result() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  const { saved = 0, flagged = 0, unattempted = 0 } = state || {};
+  // Support both: backend response (total_saved/total_flagged/total_unattempted) and auto-submit (saved/flagged/unattempted)
+  const { saved, flagged, unattempted, total_saved, total_flagged, total_unattempted } = state || {};
+  const savedCount = saved ?? total_saved ?? 0;
+  const flaggedCount = flagged ?? total_flagged ?? 0;
+  const unattemptedCount = unattempted ?? total_unattempted ?? 0;
 
   // #region agent log
   useEffect(() => {
-    fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Result.jsx:mount',message:'Result page mounted',data:{stateKeys:state?Object.keys(state):[],saved,flagged,unattempted},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'R1'})}).catch(()=>{});
-  }, [state, saved, flagged, unattempted]);
+    fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Result.jsx:mount',message:'Result page mounted',data:{stateKeys:state?Object.keys(state):[],savedCount,flaggedCount,unattemptedCount},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'R1'})}).catch(()=>{});
+  }, [state, savedCount, flaggedCount, unattemptedCount]);
   // #endregion
 
   return (
@@ -27,9 +31,9 @@ export default function Result() {
         </p>
 
         <div className="text-left mb-6 space-y-2">
-          <p>Questions Saved: <b>{saved}</b></p>
-          <p>Questions Flagged: <b>{flagged}</b></p>
-          <p>Unattempted Questions: <b>{unattempted}</b></p>
+          <p>Questions Saved: <b>{savedCount}</b></p>
+          <p>Questions Flagged: <b>{flaggedCount}</b></p>
+          <p>Unattempted Questions: <b>{unattemptedCount}</b></p>
         </div>
 
         <button

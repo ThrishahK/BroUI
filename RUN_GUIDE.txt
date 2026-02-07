@@ -49,26 +49,6 @@ cd backend
 source venv/bin/activate
 python switch_database.py sqlite
 python setup_database.py
-```
-
-For PostgreSQL (Production):
-```
-# Install PostgreSQL first
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-
-# Create database and user
-sudo -u postgres psql
-CREATE DATABASE brocode_db;
-CREATE USER brocode_user WITH ENCRYPTED PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE brocode_db TO brocode_user;
-\q
-
-# Update .env file
-DATABASE_URL=postgresql://brocode_user:your_password@localhost:5432/brocode_db
-
-# Install PostgreSQL driver
-pip install psycopg2-binary
 
 # Setup database
 python setup_database.py
@@ -87,12 +67,6 @@ source venv/bin/activate
 python server.py
 ```
 
-Option B - Development Server (Auto-reload):
-```
-cd backend
-source venv/bin/activate
-python run.py
-```
 
 API Service will be available at:
 - http://localhost:8000

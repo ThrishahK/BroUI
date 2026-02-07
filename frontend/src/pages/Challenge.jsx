@@ -52,6 +52,10 @@ export default function Challenge() {
             // #region agent log
             fetch('http://127.0.0.1:7244/ingest/363f383c-78b1-424a-8ec9-283c7a04277c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Challenge.jsx:getChallengeStatus',message:'Existing session loaded',data:{hasSession:!!statusData?.session},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'C1'})}).catch(()=>{});
             // #endregion
+          } else if (err.message.includes("already completed") || err.message.includes("cannot attempt again")) {
+            // Team finished the challenge — redirect to leaderboard
+            navigate("/leaderboard", { replace: true });
+            return;
           } else {
             throw err;
           }
@@ -303,6 +307,32 @@ export default function Challenge() {
   const currentQuestion = questions[current];
   const execState = executeStatus[currentQuestion?.id] || {};
 
+  // All questions "answered" = either correct (green) or 5 tries used / failed (red)
+  const allQuestionsAnswered =
+    questions.length > 0 &&
+    questions.every((q) => q.is_correct || q.attempts >= 5);
+
+  const handleFinish = async () => {
+    const ok = window.confirm(
+      "You have attempted all questions. Submit and view the leaderboard?"
+    );
+    if (!ok) return;
+    try {
+      const submissions = questions
+        .filter((q) => q.answer && q.answer.trim() !== "")
+        .map((q) => ({
+          question_id: q.id,
+          code_answer: q.answer,
+          status: q.status,
+        }));
+      await challengeAPI.submitChallenge(submissions);
+      navigate("/leaderboard");
+    } catch (err) {
+      console.error("Failed to submit challenge:", err);
+      alert("Failed to submit: " + (err.message || err));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-900 text-white flex items-center justify-center">
@@ -363,9 +393,10 @@ export default function Challenge() {
                 ${isActive ? "ring-2 ring-white scale-110 z-20" : "opacity-80 hover:opacity-100"}
                 ${
                   q.is_correct ? "bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]" :
-                  q.status === "flagged" ? "bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]" :
-                  q.attempts > 0 ? "bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]" :
-                  "bg-red-500/40 border border-red-500/50"
+                  q.attempts >= 5 && !q.is_correct ? "bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]" :
+                  q.status === "saved" ? "bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]" :
+                  q.status === "flagged" ? "bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]" :
+                  "bg-gray-600/60 border border-gray-500/50"
                 }
               `}
             >
@@ -543,14 +574,25 @@ export default function Challenge() {
             </div>
           </div>
 
-          {/* Submit */}
-          {current === questions.length - 1 && (
+          {/* Submit (voluntary, on last question) */}
+          {current === questions.length - 1 && !allQuestionsAnswered && (
             <button
               onClick={manualSubmit}
               className="mt-6 bg-purple-600 px-6 py-3 rounded-full
                          hover:scale-105 hover:glow-purple transition"
             >
               Submit Challenge
+            </button>
+          )}
+
+          {/* Finish: only when every question is answered (correct or 5 tries) → save & leaderboard */}
+          {allQuestionsAnswered && (
+            <button
+              onClick={handleFinish}
+              className="mt-6 w-full max-w-md mx-auto block bg-green-600 px-6 py-4 rounded-xl
+                         hover:scale-[1.02] hover:glow-green transition font-bold text-lg"
+            >
+              Finish — Save & View Leaderboard
             </button>
           )}
         </div>

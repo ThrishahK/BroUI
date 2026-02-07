@@ -18,6 +18,13 @@ class SubmissionUpdate(BaseModel):
     code_answer: Optional[str] = None
     status: Optional[str] = None
 
+
+class SubmissionSubmitItem(BaseModel):
+    """Per-item payload for challenge submit (must include question_id to identify submission)."""
+    question_id: int
+    code_answer: Optional[str] = None
+    status: Optional[str] = None
+
 class ExecuteRequest(BaseModel):
     code_answer: str
 
@@ -60,7 +67,7 @@ class ChallengeStatusResponse(BaseModel):
     time_remaining_seconds: int
 
 class ChallengeSubmitRequest(BaseModel):
-    submissions: List[SubmissionUpdate]
+    submissions: List[SubmissionSubmitItem]
 
 class ChallengeSubmitResponse(BaseModel):
     message: str

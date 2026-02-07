@@ -398,10 +398,10 @@ export const getTeams = adminAPI.getTeams;
 export const createTeam = adminAPI.createTeam;
 export const deleteTeam = adminAPI.deleteTeam;
 
-// Leaderboard API
+// Leaderboard API (uses same dynamic base URL as rest of API for LAN support)
 export const leaderboardAPI = {
   getLeaderboard: async () => {
-    const res = await fetch("http://localhost:8000/api/leaderboard");
+    const res = await fetch(`${API_BASE_URL}/leaderboard`);
     return res.json();
   },
 };
